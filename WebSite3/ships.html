@@ -1,0 +1,128 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>this is a test</title>
+    <meta charset="UTF-8">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="scripts/snippets.js"></script>
+    <script src="scripts/ImageBit.js"></script> 
+    <script src="scripts/MSet.js"></script> 
+
+    <link rel="stylesheet" type="text/css" href="styles/tasks.css">
+
+    <script>
+        var canvas1;
+        var canvas2;
+        var mouseWindowHeight, mouseWindowWidth;
+        var oldX, oldY;
+        var op;
+        var ctx1, ctx2;
+
+
+        function init() {
+
+            canvas1 = document.getElementById("canvas1");
+            ctx1 = canvas1.getContext("2d");
+            canvas2 = document.getElementById("canvas2");
+            ctx2 = canvas2.getContext("2d");
+
+            fillSet();
+  
+            mouseWindowWidth = canvas1.width / 5 + 1;
+            mouseWindowHeight = canvas1.height / 5 + 1;
+
+            canvas2.onmouseleave = function (e) {
+                ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+             }
+                  
+            canvas2.onmousemove = function (e) {
+                
+                relativeCoords = canvas2.relativeMouseCoords(e);
+                ctx2.clearRect(oldX - mouseWindowWidth / 2 - 3, oldY - mouseWindowHeight / 2 - 3, mouseWindowWidth + 6, mouseWindowHeight + 6);
+
+                ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
+                ctx2.fillRect(relativeCoords.x - mouseWindowWidth / 2, relativeCoords.y - mouseWindowHeight / 2, mouseWindowWidth, mouseWindowHeight);
+
+                oldX = relativeCoords.x; oldY = relativeCoords.y;       
+
+            };
+        
+            canvas2.onmousewheel = function (e) {
+
+                relativeCoords = canvas2.relativeMouseCoords(e);
+
+                var delta = Math.max(-1, Math.min(1, e.wheelDelta));
+                mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
+                mouseWindowWidth = (1 + 0.2 * delta) * mouseWindowWidth;
+
+                ctx2.clearRect(0,0,canvas2.width, canvas2.height);
+                ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
+                ctx2.fillRect(relativeCoords.x - mouseWindowWidth / 2, relativeCoords.y - mouseWindowHeight / 2, mouseWindowWidth, mouseWindowHeight);
+
+                oldX = relativeCoords.x; oldY = relativeCoords.y;
+
+                return false; //this prevents the default scrolling
+            }
+            
+            canvas2.onmouseup = function (e) {
+
+
+                mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
+                mouseWindowWidth = (1 + 0.2 * delta) * mouseWindowWidth;
+
+              
+            }
+
+            
+        }
+
+        function myFill() {
+          
+            var imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, -2, 0.5, 0);
+            imb.calculate();
+            m = new MSet(1000,18);
+            m.paint(imb);
+
+            ctx1.putImageData(imb.imgData, 0, 0);
+        
+        }
+
+        function fillSet() {
+            var imgData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+
+            for (var i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] = 255;
+                imgData.data[i + 1] = 255;
+                imgData.data[i + 2] = 255;
+                imgData.data[i + 3] = 255;
+            }
+
+            ctx1.putImageData(imgData, 0, 0);
+       }
+
+        
+    </script>
+
+</head>
+
+
+<body onload="init();">
+
+ <div id="contains" style ="position:relative; height:500px; width:800px" >
+   <canvas id="canvas1"  width="760" height="480" style ="position:absolute"></canvas>
+   <canvas id="canvas2"  width="760" height="480" style ="position:absolute"></canvas>
+ </div>
+
+ <a class="txtButton" onclick="myFill()">Fill</a>
+ <a class="txtButton" onclick="myFill2()">Fill2</a>
+ <label id="outl1">X1</label> <input id="out1"; type="text"/>
+ <label id="outl2">X2</label> <input id="out2"; type="text"/>
+ <label id="outl3">Y1</label> <input id="out3"; type="text"/>
+ <label id="outl4">Y2</label> <input id="out4"; type="text"/>
+ 
+
+
+</body>
+</html>

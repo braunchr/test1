@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" type="text/css" href="styles/tasks.css">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="scripts/Graph1.js"></script>
+
+
+
+    <title>Task list</title>
+</head>
+
+<body>
+    <header>
+        <span>Task list</span>
+    </header>
+
+
+    <section class="newline">
+        <nav class="vertical">
+            <a class="txtButton" onclick="myFill()">Fill</a>
+            <a class="txtButton" onclick="myClear()">Clear</a>
+            <a class="txtButton" onclick="goforit()">Draw</a>        
+            <a class="txtButton" onclick="grow()">Grow</a>
+        </nav>
+
+        <section>
+            <div>
+                <label>Input</label>
+                <input type="text" />
+            </div>
+
+
+            <section class="newline">
+                <canvas id="myCanvas" width="600" height="300"></canvas>
+            </section>
+
+        </section>
+
+    </section>
+
+
+    <footer class="newline">
+        You have 3 tasks
+    </footer>
+
+</body>
+
+</html>
