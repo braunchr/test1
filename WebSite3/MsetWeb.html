@@ -27,7 +27,7 @@
             canvas2 = document.getElementById("canvas2");
             ctx2 = canvas2.getContext("2d");
 
-            fillSet();
+            clearSet();
   
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
@@ -89,7 +89,7 @@
         
         }
 
-        function fillSet() {
+        function clearSet() {
             var imgData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
 
             for (var i = 0; i < imgData.data.length; i += 4) {
@@ -115,14 +115,12 @@
    <canvas id="canvas2"  width="760" height="480" style ="position:absolute"></canvas>
  </div>
 
- <a class="txtButton" onclick="myFill()">Fill</a>
- <a class="txtButton" onclick="myFill2()">Fill2</a>
- <label id="outl1">X1</label> <input id="out1"; type="text"/>
- <label id="outl2">X2</label> <input id="out2"; type="text"/>
- <label id="outl3">Y1</label> <input id="out3"; type="text"/>
- <label id="outl4">Y2</label> <input id="out4"; type="text"/>
+ <button onclick="myFill()">Fill</button>
+ <button onclick="myFill2()">Fill2</button>
+ <label id="outl1">X1</label> <input id="out1">
+ <label id="outl2">X2</label> <input id="out2">
+ <label id="outl3">Y1</label> <input id="out3">
+ <label id="outl4">Y2</label> <input id="out4">
  
-
-
 </body>
 </html>
