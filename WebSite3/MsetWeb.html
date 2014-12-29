@@ -78,15 +78,16 @@
         }
 
         function myFill() {
-          
+
             var imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
             var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, -2, 0.5, 0);
-            imb.calculate();
-            m = new MSet(1000,18);
+            imb.fillColor(255, 255, 255);
+            m = new MSet(1000, 18);
             m.paint(imb);
-
+       
             ctx1.putImageData(imb.imgData, 0, 0);
-        
+
+ 
         }
 
         function clearSet() {
@@ -109,18 +110,23 @@
 
 
 <body onload="init();">
+    <div style="width: 760px">
+        <div style="position: relative; height: 500px">
+            <canvas id="canvas1" height="480" width="760"></canvas>
+            <canvas id="canvas2" height="480" width="760"></canvas>
+        </div>
 
- <div id="contains" style ="position:relative; height:500px; width:800px" >
-   <canvas id="canvas1"  width="760" height="480" style ="position:absolute"></canvas>
-   <canvas id="canvas2"  width="760" height="480" style ="position:absolute"></canvas>
- </div>
-
- <button onclick="myFill()">Fill</button>
- <button onclick="myFill2()">Fill2</button>
- <label id="outl1">X1</label> <input id="out1">
- <label id="outl2">X2</label> <input id="out2">
- <label id="outl3">Y1</label> <input id="out3">
- <label id="outl4">Y2</label> <input id="out4">
- 
+        <div class="item_line">
+            <button onclick="myFill()">Fill</button>
+            <label id="outl1" style="margin-left: 50px">In</label>
+            <input id="out1">
+            <label id="outl2">Circle</label>
+            <input id="out2">
+            <label id="outl3">just out</label>
+            <input id="out3">
+            <label id="outl4">Y2</label>
+            <input id="out4">
+        </div>
+    </div>
 </body>
 </html>

@@ -13,12 +13,7 @@ function ImageBit (imgData, wi, he, x1, y1, x2) {
 
 };
 
-    ImageBit.prototype.calculate = function () {
-       
-    this.fillColor(255, 255, 255);    
-
-    };
-
+   
     //*************************************************************
     //this function draws a circle with xc, yc and rad in pixels
     //*************************************************************
@@ -74,7 +69,6 @@ function ImageBit (imgData, wi, he, x1, y1, x2) {
             }
         }
     }
-
 
 
     ImageBit.prototype.setPixel = function (i, j, r, g, b) {

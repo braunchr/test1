@@ -2,21 +2,17 @@
 
 body {
 font-family: "helvetica neue", helvetica, "lucinda sans unicode", "sans serif";
-font-weight: normal;
 font-size: 12px;
-}
-
-label {
-	margin-left: 10px;
 }
 
 input {
     width: 90px;
     padding-left:2px;
+    margin: 4px;
 }
       
 button {
-    margin: 0px 5px;
+    margin: 4px 5px;
     width: 80px;
     -webkit-transition:all 0.1s linear;
     float:left;
@@ -25,6 +21,7 @@ button {
 canvas{   
     border: 1px solid #FFFFFF;
     border-color:black;
+    position:absolute;
 }
 
 button:hover {
@@ -33,3 +30,7 @@ button:hover {
     -webkit-box-shadow: 3px 3px 3px rgba(0,0,0, 0.5); 
 }
 
+.item_line {
+height:33px;
+background-color:beige;
+}
