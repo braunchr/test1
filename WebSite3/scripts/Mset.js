@@ -7,6 +7,7 @@
   Distance estimator for points near the Mandelbrot set.
 
 *******************************************************************/
+var ci =0 , ou = 0, n = 0, m=0;
 
 function MSet(maxiter, threshold) 
 {
@@ -14,14 +15,12 @@ function MSet(maxiter, threshold)
     this.threshold = 15;
     this.xorbit = new Array(10000);/* Stores the orbit of x 	*/
     this.yorbit = new Array(10000);/* Stores the orbit of y 	*/
-    this.flag = false;
-    this.temp = 0;			/* Real scratch variable	*/
-    this.dist = 0;			/* Distance returned 		*/
 }
 
 
  MSet.prototype.paintDisk = function( i,  j, imgbit)  
 {
+    m = window.performance.now();
     var x = imgbit.x1 + i / imgbit.pixOverX;
     var y = imgbit.y1 - j / imgbit.pixOverX;
 
@@ -30,36 +29,38 @@ function MSet(maxiter, threshold)
 
     if (radius > 1)
     {
-        imgbit.fillDisk(i, j, radius, 200, 200, 200); //draw a circle and fill it. 
-        imgbit.drawCircle(i, j, radius, 150, 150, 150);
+        imgbit.fillDisk(i, j, radius, 50, 50, 200); //draw a circle and fill it. 
+        imgbit.drawCircle(i, j, radius, 100, 100, 100);
+        //ci = ci + window.performance.now() - m;
         }
-        else if (dist > 1 / imgbit.pixOverX / this.threshold)
+    else if (dist > 1 / imgbit.pixOverX / this.threshold)
         {
-            imgbit.setPixel(i, j, 0,0,255); // the point is just outside the set
+            imgbit.setPixel(i, j, 0, 0, 255); // the point is just outside the set
+            //ou = ou + window.performance.now() - m;
+            
         }
-        else
+    else
         {
-            imgbit.setPixel(i, j, 0,0,0); // the point is IN the set
+        imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
+        //n = n + window.performance.now() - m;
+        
     }
+   // document.getElementById('out1').value = n;
+   // document.getElementById('out2').value = ci;
+   // document.getElementById('out3').value = ou;
 }
 
 
 MSet.prototype.distance = function(cx, cy)
 {
-   
-    var iter, i;
-    var x2, y2;			        /* Squares of x and y 		*/
-    var x, y;                   /* Real and imaginary part  	*/
-    var xdc = 0, ydc = 0;		/* Derivatives	in c	  	*/
-
-    x = y = x2 = y2 = this.dist = this.xorbit[0] = this.yorbit[0] = iter = 0;
-
- 
+    var x = 0, y = 0, x2 = 0, y2 = 0, dist = 0, iter = 0, temp = 0, xdc = 0, ydc = 0, i = 0, flag = false;
+    this.xorbit[0] = this.yorbit[0] = 0;
+  
     while ((iter < this.maxiter) && ((x2 + y2) < 10000))
     {
-        this.temp = x2 - y2 + cx;
+        temp = x2 - y2 + cx;
         y = 2 * x * y + cy;
-        x = this.temp;
+        x = temp;
         x2 = x * x;
         y2 = y * y;
         iter++;
@@ -71,24 +72,26 @@ MSet.prototype.distance = function(cx, cy)
     {
         xdc = ydc = 0;
         i = 0;
-        this.flag = false;
-        while ((i < iter) && (this.flag == false))
+        flag = false;
+        while ((i < iter) && (flag == false))
         {
-            this.temp = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
+            temp = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
             ydc = 2 * (this.yorbit[i] * xdc + this.xorbit[i] * ydc);
-            xdc = this.temp;
-            this.flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
+            xdc = temp;
+            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
             i++;
         }
-        if (this.flag == false)
-            this.dist = Math.log(x2 + y2) * Math.sqrt(x2 + y2) / Math.sqrt(xdc * xdc + ydc * ydc);
+        if (flag == false)
+            dist = Math.log(x2 + y2) * Math.sqrt(x2 + y2) / Math.sqrt(xdc * xdc + ydc * ydc);
     }
-    return this.dist;
+    return dist;
 }
 
 
 MSet.prototype.paint = function (imgbit) {
     
+    var n = window.performance.now();
+
     for (var j = 0; j < imgbit.height; j++)
     {
         for (var i = 0; i<imgbit.width; i++)
@@ -100,8 +103,8 @@ MSet.prototype.paint = function (imgbit) {
         }
         
     }
-
-
+    
+    document.getElementById('out4').value = window.performance.now() - n;
     return imgbit;
 }
 
