@@ -26,16 +26,32 @@
             ctx1 = canvas1.getContext("2d");
             canvas2 = document.getElementById("canvas2");
             ctx2 = canvas2.getContext("2d");
+          
+            canvas1.width = $("#canvasContainer").width();
+            canvas1.height = $("#canvasContainer").height();
+            canvas2.width = $("#canvasContainer").width();
+            canvas2.height = $("#canvasContainer").height();
 
-            clearSet();
-  
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
+
+            document.getElementById("out1").value = -2.5;
+            document.getElementById("out2").value = 1.2;
+            document.getElementById("out3").value = 0.55;
+
+
+            /*******************************************************
+            /* Clear the sprite when the mouse leaves the canvas
+            /*******************************************************/
 
             canvas2.onmouseleave = function (e) {
                 ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
              }
-                  
+            
+            /*******************************************************
+            /* Redraws the sprite when the mouse moves
+            /*******************************************************/
+
             canvas2.onmousemove = function (e) {
                 
                 relativeCoords = canvas2.relativeMouseCoords(e);
@@ -44,10 +60,16 @@
                 ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
                 ctx2.fillRect(relativeCoords.x - mouseWindowWidth / 2, relativeCoords.y - mouseWindowHeight / 2, mouseWindowWidth, mouseWindowHeight);
 
-                oldX = relativeCoords.x; oldY = relativeCoords.y;       
+                oldX = relativeCoords.x; oldY = relativeCoords.y;
+
+                document.getElementById("out4").value = relativeCoords.y - mouseWindowHeight / 2;
 
             };
-        
+
+            /*******************************************************
+            /* Resizes when the mouse wheel scrolls
+            /*******************************************************/
+
             canvas2.onmousewheel = function (e) {
 
                 relativeCoords = canvas2.relativeMouseCoords(e);
@@ -65,43 +87,40 @@
                 return false; //this prevents the default scrolling
             }
             
-            canvas2.onmouseup = function (e) {
 
+            /*******************************************************
+            /* Clear the sprite when the mouse leaves the canvas
+            /*******************************************************/
+
+            canvas2.onmouseup = function (e) {
 
                 mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
                 mouseWindowWidth = (1 + 0.2 * delta) * mouseWindowWidth;
-
-              
             }
+        }   // End of the init function. 
 
-            
-        }
+
+        /*******************************************************
+        /* Triggers the computation and drawing of the Set
+        /*******************************************************/
 
         function myFill() {
 
             var imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
-            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, -2, 0.5, 0);
-            imb.fillColor(255, 255, 255);
+            var x1 = parseFloat(document.getElementById("out1").value);
+            var y1 = parseFloat(document.getElementById("out2").value);
+            var x2 = parseFloat(document.getElementById("out3").value);
+
+            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1,y1,x2);
+
+            imb.fillColor(0, 0, 0, 0);
             m = new MSet(1000, 18);
             m.paint(imb);
        
             ctx1.putImageData(imb.imgData, 0, 0);
-
- 
         }
 
-        function clearSet() {
-            var imgData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
 
-            for (var i = 0; i < imgData.data.length; i += 4) {
-                imgData.data[i] = 255;
-                imgData.data[i + 1] = 255;
-                imgData.data[i + 2] = 255;
-                imgData.data[i + 3] = 255;
-            }
-
-            ctx1.putImageData(imgData, 0, 0);
-       }
 
         
     </script>
@@ -111,21 +130,21 @@
 
 <body onload="init();">
     <div style="width: 760px">
-        <div style="position: relative; height: 500px">
-            <canvas id="canvas1" height="480" width="760"></canvas>
-            <canvas id="canvas2" height="480" width="760"></canvas>
+        <div id="canvasContainer" style="position:relative; height:500px; width:800px" >
+            <canvas id="canvas1"></canvas>
+            <canvas id="canvas2"></canvas>
         </div>
 
         <div class="item_line">
             <button onclick="myFill()">Fill</button>
             <label id="outl1" style="margin-left: 50px">In</label>
-            <input id="out1">
+            <input id="out1"; >
             <label id="outl2">Circle</label>
-            <input id="out2">
+            <input id="out2"; >
             <label id="outl3">just out</label>
-            <input id="out3">
+            <input id="out3"; >
             <label id="outl4">Y2</label>
-            <input id="out4">
+            <input id="out4"; >
         </div>
     </div>
 </body>

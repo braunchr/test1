@@ -100,12 +100,12 @@ function ImageBit (imgData, wi, he, x1, y1, x2) {
     }
 
 
-    ImageBit.prototype.fillColor = function (r,g,b) {
+    ImageBit.prototype.fillColor = function (r,g,b,a) {
         for (var i = 0; i < (4 * this.width * this.height) ; i = i + 4) {
             this.imgData.data[i] = r;
             this.imgData.data[i + 1] = g;
             this.imgData.data[i + 2] = b;
-            this.imgData.data[i + 3] = 255;
+            this.imgData.data[i + 3] = a;
         }
     };
 

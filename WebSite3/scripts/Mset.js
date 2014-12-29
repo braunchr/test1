@@ -7,8 +7,6 @@
   Distance estimator for points near the Mandelbrot set.
 
 *******************************************************************/
-var ci =0 , ou = 0, n = 0, m=0;
-
 function MSet(maxiter, threshold) 
 {
     this.maxiter = 100;
@@ -20,7 +18,6 @@ function MSet(maxiter, threshold)
 
  MSet.prototype.paintDisk = function( i,  j, imgbit)  
 {
-    m = window.performance.now();
     var x = imgbit.x1 + i / imgbit.pixOverX;
     var y = imgbit.y1 - j / imgbit.pixOverX;
 
@@ -31,23 +28,15 @@ function MSet(maxiter, threshold)
     {
         imgbit.fillDisk(i, j, radius, 50, 50, 200); //draw a circle and fill it. 
         imgbit.drawCircle(i, j, radius, 100, 100, 100);
-        //ci = ci + window.performance.now() - m;
         }
     else if (dist > 1 / imgbit.pixOverX / this.threshold)
         {
             imgbit.setPixel(i, j, 0, 0, 255); // the point is just outside the set
-            //ou = ou + window.performance.now() - m;
-            
         }
     else
         {
         imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
-        //n = n + window.performance.now() - m;
-        
     }
-   // document.getElementById('out1').value = n;
-   // document.getElementById('out2').value = ci;
-   // document.getElementById('out3').value = ou;
 }
 
 
@@ -90,21 +79,17 @@ MSet.prototype.distance = function(cx, cy)
 
 MSet.prototype.paint = function (imgbit) {
     
-    var n = window.performance.now();
-
     for (var j = 0; j < imgbit.height; j++)
     {
         for (var i = 0; i<imgbit.width; i++)
         {
-            if (imgbit.imgData.data[4 * (j*imgbit.width + i)] == 255) //only iterate if the bit is unpainted.
+            if (imgbit.imgData.data[4 * (j*imgbit.width + i)+3] == 0) //only paint if the pixel is transparent.
             {
                 this.paintDisk(i, j, imgbit);
             }
         }
         
     }
-    
-    document.getElementById('out4').value = window.performance.now() - n;
     return imgbit;
 }
 
