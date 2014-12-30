@@ -62,8 +62,6 @@
 
                 oldX = relativeCoords.x; oldY = relativeCoords.y;
 
-                document.getElementById("out4").value = relativeCoords.y - mouseWindowHeight / 2;
-
             };
 
             /*******************************************************
@@ -94,8 +92,25 @@
 
             canvas2.onmouseup = function (e) {
 
-                mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
-                mouseWindowWidth = (1 + 0.2 * delta) * mouseWindowWidth;
+                relativeCoords = canvas2.relativeMouseCoords(e);
+            
+                var currX1 = parseFloat(document.getElementById("out1").value);
+                var currY1 = parseFloat(document.getElementById("out2").value);
+                var currX2 = parseFloat(document.getElementById("out3").value);
+                var xSpan = currX2 - currX1;
+                var ySpan = xSpan * canvas2.height/canvas2.width;
+
+                var x1 = currX1+(relativeCoords.x - mouseWindowWidth / 2)/canvas2.width*xSpan;
+                var y1 = currY1-(relativeCoords.y - mouseWindowHeight / 2)/canvas2.height*ySpan;
+                var x2 = currX1+(relativeCoords.x + mouseWindowWidth / 2)/canvas2.width*xSpan;
+
+                document.getElementById("out1").value = x1;
+                document.getElementById("out2").value = y1;
+                document.getElementById("out3").value = x2;
+
+
+                paintSet();
+
             }
         }   // End of the init function. 
 
@@ -104,7 +119,7 @@
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
 
-        function myFill() {
+        function paintSet() {
 
             var imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
             var x1 = parseFloat(document.getElementById("out1").value);
@@ -112,9 +127,14 @@
             var x2 = parseFloat(document.getElementById("out3").value);
 
             var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1,y1,x2);
-
             imb.fillColor(0, 0, 0, 0);
-            m = new MSet(1000, 18);
+
+            var maxiter = Math.abs( 350 * Math.log(x2 - x1));
+            document.getElementById("out4").value = maxiter;
+            var threshold = 10+Math.abs(Math.log(x2 - x1));
+            document.getElementById("out4").value = threshold;
+
+            var m = new MSet(maxiter, threshold);
             m.paint(imb);
        
             ctx1.putImageData(imb.imgData, 0, 0);
@@ -136,7 +156,7 @@
         </div>
 
         <div class="item_line">
-            <button onclick="myFill()">Fill</button>
+            <button onclick="paintSet()">Fill</button>
             <label id="outl1" style="margin-left: 50px">In</label>
             <input id="out1"; >
             <label id="outl2">Circle</label>

@@ -9,8 +9,8 @@
 *******************************************************************/
 function MSet(maxiter, threshold) 
 {
-    this.maxiter = 100;
-    this.threshold = 15;
+    this.maxiter = maxiter;
+    this.threshold = threshold;
     this.xorbit = new Array(10000);/* Stores the orbit of x 	*/
     this.yorbit = new Array(10000);/* Stores the orbit of y 	*/
 }
