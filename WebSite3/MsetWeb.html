@@ -18,6 +18,8 @@
         var oldX, oldY;
         var op;
         var ctx1, ctx2;
+        var mousePosx, mousePosy;
+        var imgDt; 
 
 
         function init() {
@@ -35,9 +37,13 @@
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
 
-            document.getElementById("out1").value = -2.5;
-            document.getElementById("out2").value = 1.2;
-            document.getElementById("out3").value = 0.55;
+            $("#out1").val(-2.5) ;
+            $("#out2").val(1.2);
+            $("#out3").val(0.55);
+
+            imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
+            paintSet(imgDt);
+
 
 
             /*******************************************************
@@ -54,7 +60,7 @@
 
             canvas2.onmousemove = function (e) {
                 
-                relativeCoords = canvas2.relativeMouseCoords(e);
+                var relativeCoords = canvas2.relativeMouseCoords(e);
                 ctx2.clearRect(oldX - mouseWindowWidth / 2 - 3, oldY - mouseWindowHeight / 2 - 3, mouseWindowWidth + 6, mouseWindowHeight + 6);
 
                 ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
@@ -70,7 +76,7 @@
 
             canvas2.onmousewheel = function (e) {
 
-                relativeCoords = canvas2.relativeMouseCoords(e);
+                var relativeCoords = canvas2.relativeMouseCoords(e);
 
                 var delta = Math.max(-1, Math.min(1, e.wheelDelta));
                 mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
@@ -85,33 +91,59 @@
                 return false; //this prevents the default scrolling
             }
             
+            /*******************************************************
+            /* Simply stores the position of the mouse on click to see for drag on mouseup
+            /*******************************************************/
+            canvas2.onmousedown = function (e) {
+
+                relativeCoords = canvas2.relativeMouseCoords(e);
+                mousePosx = relativeCoords.x; 
+                mousePosy = relativeCoords.y;
+            }
 
             /*******************************************************
-            /* Clear the sprite when the mouse leaves the canvas
+            /* triggers a redraw depending on drag or click. 
             /*******************************************************/
 
             canvas2.onmouseup = function (e) {
 
-                relativeCoords = canvas2.relativeMouseCoords(e);
-            
+                var imgDt;
+                var relativeCoords = canvas2.relativeMouseCoords(e);
                 var currX1 = parseFloat(document.getElementById("out1").value);
                 var currY1 = parseFloat(document.getElementById("out2").value);
                 var currX2 = parseFloat(document.getElementById("out3").value);
                 var xSpan = currX2 - currX1;
-                var ySpan = xSpan * canvas2.height/canvas2.width;
+                var ySpan = xSpan * canvas2.height / canvas2.width;
 
-                var x1 = currX1+(relativeCoords.x - mouseWindowWidth / 2)/canvas2.width*xSpan;
-                var y1 = currY1-(relativeCoords.y - mouseWindowHeight / 2)/canvas2.height*ySpan;
-                var x2 = currX1+(relativeCoords.x + mouseWindowWidth / 2)/canvas2.width*xSpan;
+
+                if (relativeCoords.x != mousePosx || relativeCoords.y != mousePosy) {
+                    var x1 = currX1 - (relativeCoords.x - mousePosx) / canvas2.width * xSpan;
+                    var y1 = currY1 + (relativeCoords.y - mousePosy) / canvas2.height * ySpan;
+                    var x2 = x1 + xSpan;
+                    // we have drag so take a snapshot of the image and shift it
+                    imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+                    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                    ctx1.putImageData(imgDt, relativeCoords.x - mousePosx, relativeCoords.y - mousePosy);
+                    imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+                }
+
+                else {
+                    var x1 = currX1 + (relativeCoords.x - mouseWindowWidth / 2) / canvas2.width * xSpan;
+                    var y1 = currY1 - (relativeCoords.y - mouseWindowHeight / 2) / canvas2.height * ySpan;
+                    var x2 = currX1 + (relativeCoords.x + mouseWindowWidth / 2) / canvas2.width * xSpan;
+                    imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
+
+                }
 
                 document.getElementById("out1").value = x1;
                 document.getElementById("out2").value = y1;
                 document.getElementById("out3").value = x2;
 
-
-                paintSet();
+                paintSet(imgDt);
+                
 
             }
+
         }   // End of the init function. 
 
 
@@ -119,30 +151,22 @@
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
 
-        function paintSet() {
-
-            var imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+        function paintSet(imgDt) {
+         
             var x1 = parseFloat(document.getElementById("out1").value);
             var y1 = parseFloat(document.getElementById("out2").value);
             var x2 = parseFloat(document.getElementById("out3").value);
-
-            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1,y1,x2);
-            imb.fillColor(0, 0, 0, 0);
-
             var maxiter = Math.abs( 350 * Math.log(x2 - x1));
-            document.getElementById("out4").value = maxiter;
-            var threshold = 10+Math.abs(Math.log(x2 - x1));
-            document.getElementById("out4").value = threshold;
+            var threshold = 10 + Math.abs(Math.log(x2 - x1));
 
+            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1, y1, x2);
+       
             var m = new MSet(maxiter, threshold);
             m.paint(imb);
        
             ctx1.putImageData(imb.imgData, 0, 0);
         }
-
-
-
-        
+      
     </script>
 
 </head>
@@ -156,14 +180,14 @@
         </div>
 
         <div class="item_line">
-            <button onclick="paintSet()">Fill</button>
-            <label id="outl1" style="margin-left: 50px">In</label>
+            <button>I do nothing</button>
+            <label id="outl1" style="margin-left: 50px">X1</label>
             <input id="out1"; >
-            <label id="outl2">Circle</label>
+            <label id="outl2">Y1</label>
             <input id="out2"; >
-            <label id="outl3">just out</label>
+            <label id="outl3">Y2</label>
             <input id="out3"; >
-            <label id="outl4">Y2</label>
+            <label id="outl4">other</label>
             <input id="out4"; >
         </div>
     </div>
