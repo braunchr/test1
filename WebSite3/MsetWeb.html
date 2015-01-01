@@ -160,10 +160,22 @@
             var threshold = 10 + Math.abs(Math.log(x2 - x1));
 
             var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1, y1, x2);
-       
             var m = new MSet(maxiter, threshold);
-            m.paint(imb);
-       
+  
+            //construct message to pass to the worker
+            var workerMessage = {
+                workerID: "1",
+                mSetName: m,
+                imgbit: imb
+            };
+
+            //create the worker. Start it by posting the data which triggers the onmessage function in the worker file. 
+            if (worker1)
+                worker1.terminate()
+            else
+                worker1 = new Worker("MsetWorker.js");
+
+
             ctx1.putImageData(imb.imgData, 0, 0);
         }
       
