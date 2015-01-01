@@ -5,11 +5,9 @@
     <title>this is a test</title>
     <meta charset="UTF-8">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="scripts/snippets.js"></script>
-    <script src="scripts/ImageBit.js"></script> 
-    <script src="scripts/MSet.js"></script> 
+    <script src="ImageBit.js"></script> 
 
-    <link rel="stylesheet" type="text/css" href="styles/tasks.css">
+    <link rel="stylesheet" type="text/css" href="MsetStyles.css">
 
     <script>
         var canvas1;
@@ -33,7 +31,7 @@
             canvas1.height = $("#canvasContainer").height();
             canvas2.width = $("#canvasContainer").width();
             canvas2.height = $("#canvasContainer").height();
-
+            
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
 
@@ -42,8 +40,9 @@
             $("#out3").val(0.55);
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
-            paintSet(imgDt);
+            paintThreadSet(imgDt);
 
+            
 
 
             /*******************************************************
@@ -139,45 +138,54 @@
                 document.getElementById("out2").value = y1;
                 document.getElementById("out3").value = x2;
 
-                paintSet(imgDt);
+                paintThreadSet(imgDt);
                 
 
-            }
+            } //onmouseup
 
-        }   // End of the init function. 
+        }   // init
 
 
         /*******************************************************
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
 
-        function paintSet(imgDt) {
-         
+        function paintThreadSet(imgDt) {
+
+            var worker1;
+
             var x1 = parseFloat(document.getElementById("out1").value);
             var y1 = parseFloat(document.getElementById("out2").value);
             var x2 = parseFloat(document.getElementById("out3").value);
-            var maxiter = Math.abs( 350 * Math.log(x2 - x1));
+            var maxiter = Math.abs(350 * Math.log(x2 - x1));
             var threshold = 10 + Math.abs(Math.log(x2 - x1));
 
             var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1, y1, x2);
-            var m = new MSet(maxiter, threshold);
-  
+
             //construct message to pass to the worker
             var workerMessage = {
                 workerID: "1",
-                mSetName: m,
+                maxiter: maxiter,
+                threshold: threshold,
                 imgbit: imb
             };
+/*
+            //create the worker. 
+            if (worker1) worker1.terminate();
+            worker1 = new Worker("MsetWorker.js");
+            
+            //Start the worker by posting the data. This triggers the onmessage function in the worker file. 
+            worker1.postMessage(workerMessage);
 
-            //create the worker. Start it by posting the data which triggers the onmessage function in the worker file. 
-            if (worker1)
-                worker1.terminate()
-            else
-                worker1 = new Worker("MsetWorker.js");
+            //registers the callback function 
+            worker1.onmessage = workerCallback;
 
-
-            ctx1.putImageData(imb.imgData, 0, 0);
-        }
+            //defines the call back function, which determinse what should happen when the workers finish. In this case, paint the image. 
+            function workerCallback(e) {
+                ctx1.putImageData(e.data.imgbit.imgData, 0, 0);
+            }
+  */          
+        } //paintThreadSet
       
     </script>
 
