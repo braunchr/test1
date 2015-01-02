@@ -92,9 +92,9 @@ ImageBit.prototype.fillCircleLine = function (i, j, delta, r, g, b) {
     //fill the entire line at coordinate i
     for (var increment = imin; increment <= imax; increment++) {
         var index = (j * this.width + increment) * 4;
-        this.imgData.data[index] = r;
-        this.imgData.data[index + 1] = g;
-        this.imgData.data[index + 2] = b;
+        this.imgData.data[index] = r +255;
+        this.imgData.data[index + 1] = g +255;
+        this.imgData.data[index + 2] = b +255;
         this.imgData.data[index + 3] = 255;
     }
 }

@@ -31,10 +31,10 @@ function MSet(maxiter, threshold)
         }
     else if (dist > 1 / imgbit.pixOverX / this.threshold && dist < 4 / imgbit.pixOverX / this.threshold)
         {
-            imgbit.setPixel(i, j, 200, 200, 200); // the point is just outside the set
+            imgbit.setPixel(i, j, 200, 0, 0); // the point is just outside the set
     }
     else if (dist > 1 / imgbit.pixOverX / this.threshold && dist >= 4 / imgbit.pixOverX / this.threshold) {
-        imgbit.setPixel(i, j, 0, 0, 255); // the point is just outside the set
+        imgbit.setPixel(i, j, 0, 255, 0); // the point is just outside the set
     }
     else
         {

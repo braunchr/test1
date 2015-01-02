@@ -61,7 +61,7 @@
             mouseWindowHeight = canvas1.height / 5 + 1;
 
             $("#out1").val(-2.5) ;
-            $("#out2").val(1.2);
+            $("#out2").val(0.2);
             $("#out3").val(0.55);
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
@@ -182,7 +182,7 @@
             var x2 = parseFloat(document.getElementById("out3").value);
             var maxiter = Math.abs(350 * Math.log(x2 - x1));
             var threshold = 10 + Math.abs(Math.log(x2 - x1));
-            var numworkers = 4;
+            var numworkers = 2;
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
            
@@ -250,7 +250,7 @@
 
 <body onload="init();">
     <div style="width: 760px">
-        <div id="canvasContainer" style="position:relative; height:500px; width:800px" >
+        <div id="canvasContainer" style="position:relative; height:800px; width:800px" >
             <canvas id="canvas1"></canvas>
             <canvas id="canvas2"></canvas>
         </div>
