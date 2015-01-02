@@ -55,10 +55,10 @@ ImageBit.prototype.fillDisk = function (xc, yc, rad, r, g, b) {
     var yChange = 1;
     var radiusError = 0;
     while (x >= y) {
-        this.fillCircleLine(xc, yc + y, x, r, g, b);
-        this.fillCircleLine(xc, yc - y, x, r, g, b);
-        this.fillCircleLine(xc, yc + x, y, r, g, b);
-        this.fillCircleLine(xc, yc - x, y, r, g, b);
+       this.fillCircleLine(xc, yc + y, x, r, g, b);
+       this.fillCircleLine(xc, yc - y, x, r, g, b);
+       this.fillCircleLine(xc, yc + x, y, r, g, b);
+       this.fillCircleLine(xc, yc - x, y, r, g, b);
 
         y++;
         radiusError = radiusError + yChange;
@@ -84,19 +84,22 @@ ImageBit.prototype.setPixel = function (i, j, r, g, b) {
 
 ImageBit.prototype.fillCircleLine = function (i, j, delta, r, g, b) {
     if (j < 0 || j >= this.height) return;  //if y is top or bottom then stop
-    if (i + delta < 0 || i - delta > this.width) return; //if the circle is left or right of the canvas
+    if (i + delta < 0 || i - delta >= this.width) return; //if the circle is left or right of the canvas
 
     var imin = Math.max(0, i - delta);
     var imax = Math.min(i + delta, this.width);
 
     //fill the entire line at coordinate i
-    for (var increment = imin; increment <= imax; increment++) {
+    for (var increment = imin; increment < imax; increment++) {
         var index = (j * this.width + increment) * 4;
-        this.imgData.data[index] = r +255;
-        this.imgData.data[index + 1] = g +255;
-        this.imgData.data[index + 2] = b +255;
-        this.imgData.data[index + 3] = 255;
+        if (this.imgData.data[index + 3] == 0) { // no need to repaint multiple times
+            this.imgData.data[index] = r;
+            this.imgData.data[index + 1] = g;
+            this.imgData.data[index + 2] = b;
+            this.imgData.data[index + 3] = 255;
+        }
     }
+
 }
 
 

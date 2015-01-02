@@ -20,7 +20,7 @@ button {
 
 canvas{   
     border: 1px solid #FFFFFF;
-    border-color:black;
+    border-color:blue;
     position:absolute;
     width: 100%;
     height: 100%;

@@ -26,8 +26,8 @@ function MSet(maxiter, threshold)
 
     if (radius > 1)
     {
-        imgbit.fillDisk(i, j, radius, 50, 50, 200); //draw a circle and fill it. 
-        imgbit.drawCircle(i, j, radius, 100, 100, 100);
+        imgbit.fillDisk(i, j, radius, 100, 100, 100); //draw a circle and fill it. 
+        //imgbit.drawCircle(i, j, radius, 100, 100, 100);
         }
     else if (dist > 1 / imgbit.pixOverX / this.threshold && dist < 4 / imgbit.pixOverX / this.threshold)
         {

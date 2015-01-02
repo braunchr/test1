@@ -67,8 +67,6 @@
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
             paintThreadSet(imgDt);
 
-            
-
 
             /*******************************************************
             /* Clear the sprite when the mouse leaves the canvas
@@ -182,7 +180,7 @@
             var x2 = parseFloat(document.getElementById("out3").value);
             var maxiter = Math.abs(350 * Math.log(x2 - x1));
             var threshold = 10 + Math.abs(Math.log(x2 - x1));
-            var numworkers = 2;
+            var numworkers = 5;
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
            
@@ -238,7 +236,7 @@
 
             //defines the call back function, which determinse what should happen when the workers finish. In this case, paint the image. 
             function workerCallback(e) {
-                ctx1.putImageData(e.data.imgbit.imgData, e.data.px1, e.data.py1);
+                ctx1.putImageData(e.data.imgbit.imgData, Math.floor(e.data.px1), Math.floor(e.data.py1));
             }
 
         } //paintThreadSet
