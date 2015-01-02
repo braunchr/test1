@@ -17,31 +17,33 @@
         var op;
         var ctx1, ctx2;
         var mousePosx, mousePosy;
-        var imgDt; 
+        var imgDt;
+        var worker = new Array();
 
-function relMouseCoords(e) { //see
 
-    var totalOffsetX = 0;
-    var totalOffsetY = 0;
-    var canvasX = 0;
-    var canvasY = 0;
-    var currentElement = this;
+        function relMouseCoords(e) {
 
-    do {
-        totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
-        totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
-    }
-    while (currentElement = currentElement.offsetParent)
+            var totalOffsetX = 0;
+            var totalOffsetY = 0;
+            var canvasX = 0;
+            var canvasY = 0;
+            var currentElement = this;
 
-    canvasX = event.pageX - totalOffsetX;
-    canvasY = event.pageY - totalOffsetY;
+            do {
+                totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+                totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+            }
+            while (currentElement = currentElement.offsetParent)
 
-    return { x: canvasX, y: canvasY }
-    
-}
+            canvasX = event.pageX - totalOffsetX;
+            canvasY = event.pageY - totalOffsetY;
 
-    HTMLCanvasElement.prototype.relativeMouseCoords = relMouseCoords;
-    
+            return { x: canvasX, y: canvasY }
+
+        }
+
+        HTMLCanvasElement.prototype.relativeMouseCoords = relMouseCoords;
+
 
         function init() {
 
@@ -114,7 +116,7 @@ function relMouseCoords(e) { //see
             }
             
             /*******************************************************
-            /* Simply stores the position of the mouse on click to see for drag on mouseup
+            /* Simply stores the position of the mouse on click to check for drag on mouseup
             /*******************************************************/
             canvas2.onmousedown = function (e) {
 
@@ -142,19 +144,18 @@ function relMouseCoords(e) { //see
                     var x1 = currX1 - (relativeCoords.x - mousePosx) / canvas2.width * xSpan;
                     var y1 = currY1 + (relativeCoords.y - mousePosy) / canvas2.height * ySpan;
                     var x2 = x1 + xSpan;
-                    // we have drag so take a snapshot of the image and shift it
+                    // we have drag so take a snapshot of the image and shift it so dont clear it all. 
                     imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                     ctx1.putImageData(imgDt, relativeCoords.x - mousePosx, relativeCoords.y - mousePosy);
-                    imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
                 }
 
                 else {
                     var x1 = currX1 + (relativeCoords.x - mouseWindowWidth / 2) / canvas2.width * xSpan;
                     var y1 = currY1 - (relativeCoords.y - mouseWindowHeight / 2) / canvas2.height * ySpan;
                     var x2 = currX1 + (relativeCoords.x + mouseWindowWidth / 2) / canvas2.width * xSpan;
-                    imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
 
+                    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 }
 
                 document.getElementById("out1").value = x1;
@@ -172,44 +173,76 @@ function relMouseCoords(e) { //see
         /*******************************************************
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
-
+        
         function paintThreadSet(imgDt) {
 
-            var worker1;
-
+           
             var x1 = parseFloat(document.getElementById("out1").value);
             var y1 = parseFloat(document.getElementById("out2").value);
             var x2 = parseFloat(document.getElementById("out3").value);
             var maxiter = Math.abs(350 * Math.log(x2 - x1));
             var threshold = 10 + Math.abs(Math.log(x2 - x1));
-
-            var imb = new ImageBit(imgDt, canvas1.width, canvas1.height, x1, y1, x2);
-
-            //construct message to pass to the worker
-            var workerMessage = {
-                workerID: "1",
-                maxiter: maxiter,
-                threshold: threshold,
-                imgbit: imb
-            };
-
-            //create the worker. 
-            if (worker1) worker1.terminate();
-            worker1 = new Worker("MsetWorker.js");
+            var numworkers = 4;
+            var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
-            //Start the worker by posting the data. This triggers the "onmessage" function in the worker file. 
-            worker1.postMessage(workerMessage);
+           
+            for (var i = 0; i < numworkers; i++) {
 
-            //registers the callback function 
-            worker1.onmessage = workerCallback;
+                var subwidth = Math.floor(canvas1.width / numworkers);
+                if (i == numworkers - 1) //if we have reached the last image, take all remaining pixels regardless of rounding
+                    subwidth = canvas1.width - i * subwidth;
+
+                for (var j = 0; j < numworkers; j++) {
+
+                    var subheight = Math.floor(canvas1.height / numworkers);
+                    if (j == numworkers-1) //if we have reached the last image, take all remaining pixels regardless of rounding
+                        subheight = canvas1.height - j * subheight;
+
+                    // take a snapshot of the subimage. 
+                    imgDt = ctx1.getImageData(xpixel, ypixel, subwidth, subheight);
+
+                    var subx1 = x1 + (x2 - x1) / canvas1.width * xpixel;
+                    var suby1 = y1 - (x2 - x1) / canvas1.width * ypixel;
+                    var subx2 = x1 + (x2 - x1) / canvas1.width * (xpixel + subwidth);
+                    var imb = new ImageBit(imgDt, subwidth, subheight, subx1, suby1 , subx2);
+
+                    //construct message to pass to the worker
+                    var workerMessage = {
+                        workerID: i*numworkers+j,
+                        maxiter: maxiter,
+                        threshold: threshold,
+                        imgbit: imb,
+                        px1: xpixel,
+                        py1: ypixel,
+                    };
+
+                    //create the worker. 
+                    var ind = numworkers * i + j;
+                    if (worker[ind])
+                        worker[ind].terminate();
+                    worker[ind] = new Worker("MsetWorker.js");
+
+                    //Start the worker by posting the data. This triggers the "onmessage" function in the worker file. 
+                    worker[ind].postMessage(workerMessage);
+
+                    //registers the callback function 
+                    worker[ind].onmessage = workerCallback;
+                    
+                    ypixel = ypixel + subheight;
+                } //j
+
+                ypixel = 0; // reset the y position for each iteration of x
+                xpixel = xpixel + subwidth; // keep tab of the current subimage position
+            } //i
+
 
             //defines the call back function, which determinse what should happen when the workers finish. In this case, paint the image. 
             function workerCallback(e) {
-                ctx1.putImageData(e.data.imgbit.imgData, 0, 0);
+                ctx1.putImageData(e.data.imgbit.imgData, e.data.px1, e.data.py1);
             }
-         
+
         } //paintThreadSet
-      
+
     </script>
 
 </head>
