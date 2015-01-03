@@ -61,8 +61,10 @@
             mouseWindowHeight = canvas1.height / 5 + 1;
 
             $("#out1").val(-2.5) ;
-            $("#out2").val(0.2);
-            $("#out3").val(0.55);
+            $("#out2").val(1.2);
+            $("#out3").val(1);
+            $("#iterationMultiplier").val(1);
+            $("#threshadd").val(0);
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
             paintThreadSet(imgDt);
@@ -160,26 +162,54 @@
                 document.getElementById("out2").value = y1;
                 document.getElementById("out3").value = x2;
 
-                paintThreadSet(imgDt);
+                paintThreadSet();
                 
 
             } //onmouseup
 
         }   // init
 
+        //*******************************************************
+        // Re-runs the same picture allowing user to modify some settings
+        //******************************************************
+        recalculate = function () {
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+
+        //*******************************************************
+        // Presets
+        //******************************************************
+        preset1 = function () {
+            $("#out1").val(-0.1691381123916208);
+            $("#out2").val(0.6505404350243774);
+            $("#out3").val(-0.16913809694267987);
+            $("#iterationMultiplier").val(4);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+
 
         /*******************************************************
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
         
-        function paintThreadSet(imgDt) {
+        function paintThreadSet() {
 
            
             var x1 = parseFloat(document.getElementById("out1").value);
             var y1 = parseFloat(document.getElementById("out2").value);
             var x2 = parseFloat(document.getElementById("out3").value);
-            var maxiter = Math.abs(350 * Math.log(x2 - x1));
-            var threshold = 10 + Math.abs(Math.log(x2 - x1));
+            var maxMult = parseFloat(document.getElementById("iterationMultiplier").value);
+            var maxiter = Math.abs(200 * Math.log(x2 - x1)) * maxMult;
+            document.getElementById("out5").value = maxiter;
+
+            var threshadd = parseFloat(document.getElementById("threshadd").value);
+            var threshold = 10 + Math.abs(Math.log(x2 - x1)) + threshadd;
+            document.getElementById("out6").value = threshold;
+
             var numworkers = 5;
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
@@ -197,7 +227,7 @@
                         subheight = canvas1.height - j * subheight;
 
                     // take a snapshot of the subimage. 
-                    imgDt = ctx1.getImageData(xpixel, ypixel, subwidth, subheight);
+                    var imgDt = ctx1.getImageData(xpixel, ypixel, subwidth, subheight);
 
                     var subx1 = x1 + (x2 - x1) / canvas1.width * xpixel;
                     var suby1 = y1 - (x2 - x1) / canvas1.width * ypixel;
@@ -227,11 +257,11 @@
                     worker[ind].onmessage = workerCallback;
                     
                     ypixel = ypixel + subheight;
-                } //j
+                } // for j loop
 
                 ypixel = 0; // reset the y position for each iteration of x
                 xpixel = xpixel + subwidth; // keep tab of the current subimage position
-            } //i
+            } // for i loop
 
 
             //defines the call back function, which determinse what should happen when the workers finish. In this case, paint the image. 
@@ -248,21 +278,31 @@
 
 <body onload="init();">
     <div style="width: 760px">
-        <div id="canvasContainer" style="position:relative; height:800px; width:800px" >
+        <div id="canvasContainer" style="position:relative; height:550px; width:800px" >
             <canvas id="canvas1"></canvas>
             <canvas id="canvas2"></canvas>
         </div>
 
         <div class="item_line">
-            <button>I do nothing</button>
-            <label id="outl1" style="margin-left: 50px">X1</label>
+            <button onclick="recalculate()">Recalculate</button>
+            <label style="margin-left: 50px">X1</label>
             <input id="out1"; >
-            <label id="outl2">Y1</label>
+            <label >Y1</label>
             <input id="out2"; >
-            <label id="outl3">Y2</label>
+            <label >Y2</label>
             <input id="out3"; >
-            <label id="outl4">other</label>
-            <input id="out4"; >
+            <label >MaxMult</label>
+            <input id="iterationMultiplier" onchange="recalculate()">
+            <label >maxiter</label>
+            <input id="out5" >
+            <label >threshold</label>
+            <input id="out6" onchange="recalculate()">
+            <label>threshold offset</label>
+            <input id="threshadd" >
+        </div>
+        <div class="item_line presets">
+            <button onclick="preset1()">Preset 1</button>
+            
         </div>
     </div>
 </body>

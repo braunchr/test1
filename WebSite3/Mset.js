@@ -26,15 +26,14 @@ function MSet(maxiter, threshold)
 
     if (radius > 1)
     {
-        imgbit.fillDisk(i, j, radius, 100, 100, 100); //draw a circle and fill it. 
-        //imgbit.drawCircle(i, j, radius, 100, 100, 100);
+        imgbit.fillDisk(i, j, radius, 50, 50, 100); //draw a circle and fill it. 
         }
     else if (dist > 1 / imgbit.pixOverX / this.threshold && dist < 4 / imgbit.pixOverX / this.threshold)
         {
-            imgbit.setPixel(i, j, 200, 0, 0); // the point is just outside the set
+            imgbit.setPixel(i, j, 0, 255, 0); // the point is just outside the set
     }
     else if (dist > 1 / imgbit.pixOverX / this.threshold && dist >= 4 / imgbit.pixOverX / this.threshold) {
-        imgbit.setPixel(i, j, 0, 255, 0); // the point is just outside the set
+        imgbit.setPixel(i, j, 255, 50, 100); // the point is just outside the set
     }
     else
         {
