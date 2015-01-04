@@ -63,8 +63,6 @@
             $("#out1").val(-2.5) ;
             $("#out2").val(1.2);
             $("#out3").val(1);
-            $("#iterationMultiplier").val(1);
-            $("#threshadd").val(0);
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
             paintThreadSet(imgDt);
@@ -158,9 +156,9 @@
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 }
 
-                document.getElementById("out1").value = x1;
-                document.getElementById("out2").value = y1;
-                document.getElementById("out3").value = x2;
+                $("#out1").val(x1);
+                $("#out2").val(y1);
+                $("#out3").val(x2);
 
                 paintThreadSet();
                 
@@ -202,15 +200,19 @@
             var x1 = parseFloat(document.getElementById("out1").value);
             var y1 = parseFloat(document.getElementById("out2").value);
             var x2 = parseFloat(document.getElementById("out3").value);
+            var col1 = $("#color1").val();
+            var col2 = $("#color2").val();
+            var col3 = $("#color3").val();
+
             var maxMult = parseFloat(document.getElementById("iterationMultiplier").value);
-            var maxiter = Math.abs(200 * Math.log(x2 - x1)) * maxMult;
-            document.getElementById("out5").value = maxiter;
+            var maxiter = Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult);
+            $('#out5').val(maxiter);
 
-            var threshadd = parseFloat(document.getElementById("threshadd").value);
-            var threshold = 10 + Math.abs(Math.log(x2 - x1)) + threshadd;
-            document.getElementById("out6").value = threshold;
+            var threshMult = parseFloat(document.getElementById("threshMult").value);
+            var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult;
+            $('#out6').val(threshold);
 
-            var numworkers = 5;
+            var numworkers = 9;
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
            
@@ -242,6 +244,9 @@
                         imgbit: imb,
                         px1: xpixel,
                         py1: ypixel,
+                        col1: col1,
+                        col2: col2,
+                        col3: col3,
                     };
 
                     //create the worker. 
@@ -277,10 +282,11 @@
 
 
 <body onload="init();">
-    <div style="width: 760px">
-        <div id="canvasContainer" style="position:relative; height:550px; width:800px" >
-            <canvas id="canvas1"></canvas>
-            <canvas id="canvas2"></canvas>
+    <div style="width: 800px;" >
+
+        <div id="canvasContainer" style="position:relative; height:550px; " >
+            <canvas id="canvas1" ></canvas>
+            <canvas id="canvas2" ></canvas>
         </div>
 
         <div class="item_line">
@@ -292,18 +298,24 @@
             <label >Y2</label>
             <input id="out3"; >
             <label >MaxMult</label>
-            <input id="iterationMultiplier" onchange="recalculate()">
+            <input id="iterationMultiplier" onchange="recalculate()" style="width:50px" value="1">
             <label >maxiter</label>
-            <input id="out5" >
+            <input id="out5" ; style="width:50px">
             <label >threshold</label>
-            <input id="out6" onchange="recalculate()">
+            <input id="out6" onchange="recalculate()" style="width:50px" value="0">
             <label>threshold offset</label>
-            <input id="threshadd" >
+            <input id="threshMult" style="width:50px" onchange="recalculate()" value="1" >
+            <label>color</label>
+            <input id="color1" type="color" style="width:60px" value="#323264" > 
+            <input id="color2" type="color" style="width:60px" value="#FF3264" >
+            <input id="color3" type="color" style="width:60px" value="#00FF00" >
+            
         </div>
         <div class="item_line presets">
             <button onclick="preset1()">Preset 1</button>
-            
         </div>
     </div>
+    
+
 </body>
 </html>
