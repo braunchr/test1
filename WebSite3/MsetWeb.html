@@ -5,6 +5,7 @@
     <title>this is a test</title>
     <meta charset="UTF-8">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src='big.js'></script>
 
     <link rel="stylesheet" type="text/css" href="MsetStyles.css">
 
@@ -80,15 +81,15 @@
             /*******************************************************/
 
             canvas2.onmousemove = function (e) {
-                
+               
                 var relativeCoords = canvas2.relativeMouseCoords(e);
                 ctx2.clearRect(oldX - mouseWindowWidth / 2 - 3, oldY - mouseWindowHeight / 2 - 3, mouseWindowWidth + 6, mouseWindowHeight + 6);
 
-                ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
+                ctx2.fillStyle = "rgba(100, 100, 100, 0.3)";
                 ctx2.fillRect(relativeCoords.x - mouseWindowWidth / 2, relativeCoords.y - mouseWindowHeight / 2, mouseWindowWidth, mouseWindowHeight);
 
                 oldX = relativeCoords.x; oldY = relativeCoords.y;
-
+                
             };
 
             /*******************************************************
@@ -96,25 +97,57 @@
             /*******************************************************/
 
             canvas2.onmousewheel = function (e) {
+             
+
+                // determine whether we are zooming in or out. 
 
                 var relativeCoords = canvas2.relativeMouseCoords(e);
-
                 var delta = Math.max(-1, Math.min(1, e.wheelDelta));
-                mouseWindowHeight = (1 + 0.2 * delta) * mouseWindowHeight;
-                mouseWindowWidth = (1 + 0.2 * delta) * mouseWindowWidth;
+                var zoom;
+                if (delta == 1) zoom = 0.7;
+                else zoom = 1.7;
 
-                ctx2.clearRect(0,0,canvas2.width, canvas2.height);
-                ctx2.fillStyle = "rgba(150, 240, 100, 0.2)";
-                ctx2.fillRect(relativeCoords.x - mouseWindowWidth / 2, relativeCoords.y - mouseWindowHeight / 2, mouseWindowWidth, mouseWindowHeight);
+                // stores the old coordinates
 
-                oldX = relativeCoords.x; oldY = relativeCoords.y;
+                var currX1 = parseFloat($("#out1").val());
+                var currY1 = parseFloat($("#out2").val());
+                var currX2 = parseFloat($("#out3").val());
+                var currxSpan = currX2 - currX1;
+                var currySpan = currxSpan * canvas2.height / canvas2.width;
 
-                return false; //this prevents the default scrolling
+                if (currxSpan > 3 && delta == -1) zoom = 1; //dont zoom way out of the image
+                if (delta == -1) $("#iterationMultiplier").val(1); // dont compute when zooming out
+                // Calculate the new coordinates
+
+                var newxSpan = currxSpan * zoom; //first calculate the dimensions of the new window
+                var newySpan = currySpan * zoom; 
+                
+                var xPerc = 1 - ( canvas2.width - relativeCoords.x ) / canvas2.width; // the % of mouse from left
+                var yPerc = 1 - ( canvas2.height - relativeCoords.y) / canvas2.offsetHeight; // the % of mouse from top
+
+                var currX = currX1 + relativeCoords.x / canvas2.width * currxSpan;
+                var currY = currY1 - relativeCoords.y / canvas2.height * currySpan;
+
+                
+                var x1 = currX - newxSpan * xPerc;
+                var x2 = x1 + newxSpan;
+                var y1 = currY + newySpan * yPerc;
+                
+
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                
+                $("#out1").val(x1);
+                $("#out2").val(y1);
+                $("#out3").val(x2);
+
+                paintThreadSet();
+
+
             }
             
-            /*******************************************************
-            /* Simply stores the position of the mouse on click to check for drag on mouseup
-            /*******************************************************/
+            //*******************************************************
+            //* Simply stores the position of the mouse on click to check for drag on mouseup
+            //*******************************************************
             canvas2.onmousedown = function (e) {
 
                 relativeCoords = canvas2.relativeMouseCoords(e);
@@ -122,9 +155,9 @@
                 mousePosy = relativeCoords.y;
             }
 
-            /*******************************************************
-            /* triggers a redraw depending on drag or click. 
-            /*******************************************************/
+            //*******************************************************
+            //* triggers a redraw depending on drag or click. 
+            //*******************************************************
 
             canvas2.onmouseup = function (e) {
 
@@ -178,6 +211,16 @@
         //*******************************************************
         // Presets
         //******************************************************
+        reset = function () {
+            $("#out1").val(-2.5);
+            $("#out2").val(1);
+            $("#out3").val(1);
+            $("#iterationMultiplier").val(1);
+            $("#threshMult").val(1);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
         preset1 = function () {
             $("#out1").val(-0.1691381123916208);
             $("#out2").val(0.6505404350243774);
@@ -187,8 +230,52 @@
             paintThreadSet();
         }
 
+        preset2 = function () {
+            $("#out1").val(-0.7272521592648912);
+            $("#out2").val(0.24029350384390788);
+            $("#out3").val(-0.7272521590179414);
+            $("#iterationMultiplier").val(2);
+            $("#threshMult").val(10);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+        //*******************************************************
+        // Presets
+        //******************************************************
 
 
+        thicker = function () {
+            $("#threshMult").val(0.12);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+        normal = function () {
+            $("#threshMult").val(1);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+        thiner = function () {
+            $("#threshMult").val(10);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+        details = function () {
+            $("#iterationMultiplier").val(3);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+        faster = function () {
+            $("#iterationMultiplier").val(1);
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            paintThreadSet();
+        }
+
+
+  
         /*******************************************************
         /* Triggers the computation and drawing of the Set
         /*******************************************************/
@@ -204,11 +291,11 @@
             var col3 = $("#color3").val();
 
             var maxMult = parseFloat(document.getElementById("iterationMultiplier").value);
-            var maxiter = Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult);
+            var maxiter = Math.max(100,Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult));
             $('#out5').val(maxiter);
 
             var threshMult = parseFloat(document.getElementById("threshMult").value);
-            var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult * 10;
+            var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult;
             $('#out6').val(threshold);
 
             // Can hardcode the nr of workers, but the below seems to work ok growing from 1 to 8
@@ -259,8 +346,7 @@
 
                     //create the worker. 
                     var ind = numworkers * i + j;
-                    if (worker[ind])
-                        worker[ind].terminate();
+                    if (worker[ind]) worker[ind].terminate();
                     worker[ind] = new Worker("MsetWorker.js");
 
                     //Start the worker by posting the data. This triggers the "onmessage" function in the worker file. 
@@ -291,20 +377,34 @@
 
 <body onload="init();">
     <div style="width: 800px;" >
-
+    
         <div id="canvasContainer" style="position:relative; height:550px; " >
             <canvas id="canvas1" ></canvas>
             <canvas id="canvas2" ></canvas>
         </div>
+        
+        <div class="item_line">
+            <button onclick="thicker()">> Lines</button>
+            <button onclick="normal()">= Lines</button>
+            <button onclick="thiner()">< Lines</button>
+            <button onclick="details()">More Details</button>
+            <button onclick="faster()">Normal Details</button>
+             
+            <label>Colors</label>
+            <input id="color1" type="color" style="width:60px" value="#323264" > 
+            <input id="color2" type="color" style="width:60px" value="#FF3264" >
+            <input id="color3" type="color" style="width:60px" value="#00FF00" >
+        
+        </div>
 
         <div class="item_line">
-            <button onclick="recalculate()">Recalculate</button>
-            <label style="margin-left: 50px">X1</label>
-            <input id="out1"; >
-            <label >Y1</label>
-            <input id="out2"; >
-            <label >Y2</label>
-            <input id="out3"; >
+            <button onclick="reset()">Reset</button>
+            <button onclick="preset1()">Preset 1</button>
+            <button onclick="preset2()">Preset 2</button>
+        </div>
+
+        <div class="item_line">
+            <div>
             <label >MaxMult</label>
             <input id="iterationMultiplier" style="width:50px" value="1">
             <label >maxiter</label>
@@ -312,18 +412,24 @@
             <label >threshold</label>
             <input id="out6" onchange="recalculate()" style="width:50px" value="0">
             <label>threshold offset</label>
-            <input id="threshMult" style="width:50px" value="1" >
-            <label>color</label>
-            <input id="color1" type="color" style="width:60px" value="#323264" > 
-            <input id="color2" type="color" style="width:60px" value="#FF3264" >
-            <input id="color3" type="color" style="width:60px" value="#00FF00" >
-            
+            <input id="threshMult" style="width:50px; " value="1" >
+            <button onclick="recalculate()" >Recalculate</button>
+            </div>  
+              
+            <label >X1</label>
+            <input id="out1"; >
+            <label >Y1</label>
+            <input id="out2"; >
+            <label >Y2</label>
+            <input id="out3"; >
+       
+                    
         </div>
-        <div class="item_line presets">
-            <button onclick="preset1()">Preset 1</button>
-        </div>
+
+
+       
+
     </div>
     
-
 </body>
 </html>
