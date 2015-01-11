@@ -1,4 +1,5 @@
 
+importScripts("big.js");
 
 /******************************************************************
                         MSET - CONSTRUCTOR
@@ -9,7 +10,7 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.threshold = threshold;// used to color points close to the set
     this.xorbit = new Array(10000);// Stores the orbit of x. Declare here for performance	
     this.yorbit = new Array(10000);// Stores the orbit of y. Declare here for performance 	
-    
+
     hexToRGB = function (hex) {
         var h = parseInt(hex.substr(1, 7),16); //Remove #. Parse HEX color to a 16 bit integer.
         var r = (h >> 16) &0xFF;
@@ -79,35 +80,37 @@ MSet.prototype.paint = function (imgbit) {
 
 //***************************************************************
 //                           DISTANCE ESTIMATOR 
-// Iterates through f(z) = z^2 + C of coordinates cx and cy start at z=0
+// Iterates through f(z) = z^2 + C of coordinates cx and cy start at z0=0
 // If after a maximum nr of iterations, the function still converges, then C is in the set 
 //***************************************************************
 MSet.prototype.distance = function(cx, cy)
 {
-    var x = 0, y = 0, x2 = 0, y2 = 0, dist = 0, iter = 0, temp = 0, xdc = 0, ydc = 0, i = 0, flag = false;
-    this.xorbit[0] = this.yorbit[0] = 0;
+    var x = Big(0), y = Big(0), x2 = Big(0), y2 = Big(0), dist = Big(0), iter = Big(0), temp = Big(0), xdc = Big(0), ydc = Big(0), i = Big(0), flag = false;
+
+
+    this.xorbit[0] = this.yorbit[0] = Big(0);
   
     while ((iter < this.maxiter) && ((x2 + y2) < 10000))
     {
-        temp = x2 - y2 + cx;
-        y = 2 * x * y + cy;
+        temp = x2.minus(y2).plus(cx);
+        y = x.times(2).times(y).plus(cy);
         x = temp;
-        x2 = x * x;
-        y2 = y * y;
+        x2 = x.times(x);
+        y2 = y.times(y);
         iter++;
         this.xorbit[iter] = x;
         this.yorbit[iter] = y;
     }
 
-    if ((x2 + y2) > 10000)
+    if ((x2.plus(y2)).gt(10000)) // we have escaped out of the set, so the point is outside. Estimate the distance. 
     {
-        xdc = ydc = 0;
+        xdc = ydc = Big(0);
         i = 0;
         flag = false;
         while ((i < iter) && (flag == false))
         {
-            temp = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
-            ydc = 2 * (this.yorbit[i] * xdc + this.xorbit[i] * ydc);
+            temp = ((this.xorbit[i].times(xdc)).minus(this.yorbit[i].times(ydc))).times(2).plus(1);
+            ydc = ((this.yorbit[i].times(xdc)).plus(this.xorbit[i].times(ydc))).times(2);
             xdc = temp;
             flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
             i++;
