@@ -212,7 +212,9 @@
 
         if (i == (nL = n.length)) {
 
-            // Zero.
+            // Zero.     
+
+
             x['c'] = [x['e'] = 0]
         } else {
 

@@ -1,10 +1,15 @@
 importScripts("Mset.js");
 importScripts("ImageBit.js");
+importScripts("Big.js");
+
+//global variable
+var precision = 20;
 
 self.onmessage = function (e) {
 
     //get the data from the event
     var threshold = e.data.threshold;
+  
     var maxiter = e.data.maxiter;
     var px1 = e.data.px1;
     var py1 = e.data.py1;
@@ -14,9 +19,24 @@ self.onmessage = function (e) {
     var imgData = e.data.imgData;
     var subwidth=e.data.subwidth;
     var subheight = e.data.subheight;
-    var subx1 = e.data.subx1;
-    var subx2 = e.data.subx2;
-    var suby1 = e.data.suby1;
+
+    var subx1 = Big(0);
+    var subx2 = Big(0);
+    var suby1 = Big(0);
+
+    subx1['c'] = e.data.subx1c;
+    subx1['e'] = e.data.subx1e;
+    subx1['s'] = e.data.subx1s;
+
+    subx2['c'] = e.data.subx2c;
+    subx2['e'] = e.data.subx2e;
+    subx2['s'] = e.data.subx2s;
+
+    suby1['c'] = e.data.suby1c;
+    suby1['e'] = e.data.suby1e;
+    suby1['s'] = e.data.suby1s;
+
+
 
     var imgbit = new ImageBit(imgData, subwidth, subheight, subx1, suby1, subx2);
 

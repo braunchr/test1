@@ -5,11 +5,14 @@
     <title>this is a test</title>
     <meta charset="UTF-8">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="Big.js"></script>
+ 
+    <link rel="stylesheet" type="text/css" href="MsetStyles.css"/>
     
-
-    <link rel="stylesheet" type="text/css" href="MsetStyles.css">
-
     <script>
+        // global variables
+        var precision = 20;
+
         var canvas1;
         var canvas2;
         var mouseWindowHeight, mouseWindowWidth;
@@ -19,7 +22,7 @@
         var mousePosx, mousePosy;
         var imgDt;
         var worker = new Array();
-
+        
 
         function relMouseCoords(e) {
 
@@ -274,7 +277,7 @@
             ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
             paintThreadSet();
         }
-
+        
 
   
         /*******************************************************
@@ -284,27 +287,25 @@
         function paintThreadSet() {
 
            
-            var x1 = parseFloat(document.getElementById("out1").value);
-            var y1 = parseFloat(document.getElementById("out2").value);
-            var x2 = parseFloat(document.getElementById("out3").value);
+            var x1 = Big(parseFloat($("#out1").val()));
+            var y1 = Big($("#out2").val());
+            var x2 = Big($("#out3").val());
             var col1 = $("#color1").val();
             var col2 = $("#color2").val();
             var col3 = $("#color3").val();
 
-            var maxMult = parseFloat(document.getElementById("iterationMultiplier").value);
-            var maxiter = Math.max(100,Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult));
+            var maxMult = parseFloat($("#iterationMultiplier").val());
+            var maxiter = Math.max(100, Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult));
+            
             $('#out5').val(maxiter);
 
-            var threshMult = parseFloat(document.getElementById("threshMult").value);
+            var threshMult = parseFloat($("#threshMult").val());
             var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult;
             $('#out6').val(threshold);
 
             // Can hardcode the nr of workers, but the below seems to work ok growing from 1 to 8
             var numworkers = 8;
-            var temp = -Math.floor(Math.log(x2 - x1)/3);
-            if (temp <= 1) numworkers = 1;
-            else if (temp <= 8) numworkers = temp;
-
+            
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
            
@@ -323,10 +324,10 @@
                     // take a snapshot of the subimage. 
                     var imgData = ctx1.getImageData(xpixel, ypixel, subwidth, subheight);
 
-                    var subx1 = x1 + (x2 - x1) / canvas1.width * xpixel;
-                    var suby1 = y1 - (x2 - x1) / canvas1.width * ypixel;
-                    var subx2 = x1 + (x2 - x1) / canvas1.width * (xpixel + subwidth);
-                    
+                    var subx1 = (x1.plus((x2.minus(x1)).div(canvas1.width).times(xpixel))).round(precision);
+                    var suby1 = (y1.minus((x2.minus(x1)).div(canvas1.width).times(ypixel))).round(precision);
+                    var subx2 = (x1.plus((x2.minus(x1)).div(canvas1.width).times((xpixel + subwidth)))).round(precision);
+                  
                     //construct message to pass to the worker
                     var workerMessage = {
                         workerID: i*numworkers+j,
@@ -340,9 +341,19 @@
                         imgData: imgData,
                         subwidth: subwidth,
                         subheight: subheight,
-                        subx1: subx1,
-                        subx2: subx2,
-                        suby1: suby1
+                        precision: precision,
+
+                        subx1c: subx1['c'],
+                        subx1e: subx1['e'],
+                        subx1s: subx1['s'],
+
+                        subx2c: subx2['c'],
+                        subx2e: subx2['e'],
+                        subx2s: subx2['s'],
+
+                        suby1c: suby1['c'],
+                        suby1e: suby1['e'],
+                        suby1s: suby1['s'],
                     };
 
                     //create the worker. 
@@ -377,9 +388,9 @@
 
 
 <body onload="init();">
-    <div style="width: 800px;" >
+    <div style="width: 400px;" >
     
-        <div id="canvasContainer" style="position:relative; height:550px; " >
+        <div id="canvasContainer" style="position:relative; height:300px; " >
             <canvas id="canvas1" ></canvas>
             <canvas id="canvas2" ></canvas>
         </div>
