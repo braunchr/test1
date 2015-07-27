@@ -1,4 +1,4 @@
-importScripts("Big.js");
+importScripts("Bignum.js");
 
 
 
@@ -67,9 +67,9 @@ MSet.prototype.paint = function (imgbit) {
 //***************************************************************
 MSet.prototype.distance = function(cx, cy)
 {
-var x = Big(0), y = Big(0), x2 = Big(0), y2 = Big(0), temp = Big(0), flag = false, iter = 0;
+    var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), flag = false, iter = 0;
 
-    this.xorbit[0] = this.yorbit[0] = Big(0);
+    this.xorbit[0] = this.yorbit[0] = new Big(0);
   
     while ((iter < this.maxiter) && ((x2.plus(y2)).lt(4)))
     {

@@ -1,11 +1,11 @@
-<!DOCTYPE HTML>
+﻿<!DOCTYPE HTML>
 <html>
 
 <head>
     <title>this is a test</title>
     <meta charset="UTF-8">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="Big.js"></script>
+    <script src="Bignum.js"></script>
  
     <link rel="stylesheet" type="text/css" href="MsetStyles.css"/>
     
@@ -287,9 +287,9 @@
         function paintThreadSet() {
 
            
-            var x1 = Big(parseFloat($("#out1").val()));
-            var y1 = Big($("#out2").val());
-            var x2 = Big($("#out3").val());
+            var x1 = new Big(parseFloat($("#out1").val()));
+            var y1 = new Big($("#out2").val());
+            var x2 = new Big($("#out3").val());
             var col1 = $("#color1").val();
             var col2 = $("#color2").val();
             var col3 = $("#color3").val();
@@ -324,9 +324,9 @@
                     // take a snapshot of the subimage. 
                     var imgData = ctx1.getImageData(xpixel, ypixel, subwidth, subheight);
 
-                    var subx1 = (x1.plus((x2.minus(x1)).div(canvas1.width).times(xpixel))).round(precision);
-                    var suby1 = (y1.minus((x2.minus(x1)).div(canvas1.width).times(ypixel))).round(precision);
-                    var subx2 = (x1.plus((x2.minus(x1)).div(canvas1.width).times((xpixel + subwidth)))).round(precision);
+                    var subx1 = x1.plus((x2.minus(x1)).times(new Big(xpixel/canvas1.width)));
+                    var suby1 = y1.minus((x2.minus(x1)).times(new Big(ypixel/canvas1.width)));
+                    var subx2 = x1.plus((x2.minus(x1)).times((new Big(xpixel + subwidth)/canvas1.width)));
                   
                     //construct message to pass to the worker
                     var workerMessage = {
