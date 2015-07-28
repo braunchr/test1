@@ -1,6 +1,6 @@
 importScripts("Mset.js");
 importScripts("ImageBit.js");
-importScripts("Big.js");
+importScripts("Bignum.js");
 
 //global variable
 var precision = 20;
@@ -20,9 +20,9 @@ self.onmessage = function (e) {
     var subwidth=e.data.subwidth;
     var subheight = e.data.subheight;
 
-    var subx1 = Big(0);
-    var subx2 = Big(0);
-    var suby1 = Big(0);
+    var subx1 = new Big(0);
+    var subx2 = new Big(0);
+    var suby1 = new Big(0);
 
     subx1['c'] = e.data.subx1c;
     subx1['e'] = e.data.subx1e;

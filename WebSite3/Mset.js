@@ -51,10 +51,10 @@ MSet.prototype.paint = function (imgbit) {
                     imgbit.setPixel(i, j, 50, 50, 200); // the point is out of the set
             }
 
-            cx = (cx.plus(imgbit.XOverPix)).round(precision); //increment the x axis by one pixel
+            cx = (cx.plus(imgbit.xyIncrement)).round(precision); //increment the x axis by one pixel
         }
         cx = imgbit.x1; // reset the x axis for the next line
-        cy = (cy.minus(imgbit.XOverPix)).round(precision);  // increment the y axis by one pixel
+        cy = (cy.minus(imgbit.xyIncrement)).round(precision);  // increment the y axis by one pixel
     }
     return imgbit;
 }

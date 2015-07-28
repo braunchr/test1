@@ -9,7 +9,7 @@ function ImageBit (imgData, wi, he, x1, y1, x2) {
     this.y1 = y1;
     this.x2 = x2;
     this.xSide = (this.x2).minus(this.x1);
-    this.XOverPix = Big(this.xSide).div(this.width);
+    this.xyIncrement = (this.xSide).divint(this.width);
 
 }
 
@@ -43,8 +43,7 @@ ImageBit.prototype.drawCircle = function (ic, jc, rad, r, g, b) {
     }
 }
 
-    
-
+   
     //*************************************************************
     //this function fills a black circle centred ic, jc and rad in pixels
     //*************************************************************

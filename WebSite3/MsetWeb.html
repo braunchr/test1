@@ -303,8 +303,8 @@
             var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult;
             $('#out6').val(threshold);
 
-            // Can hardcode the nr of workers, but the below seems to work ok growing from 1 to 8
-            var numworkers = 8;
+            
+            var numworkers = 1;
             
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
@@ -326,7 +326,7 @@
 
                     var subx1 = x1.plus((x2.minus(x1)).times(new Big(xpixel/canvas1.width)));
                     var suby1 = y1.minus((x2.minus(x1)).times(new Big(ypixel/canvas1.width)));
-                    var subx2 = x1.plus((x2.minus(x1)).times((new Big(xpixel + subwidth)/canvas1.width)));
+                    var subx2 = x1.plus((x2.minus(x1)).times(new Big((xpixel + subwidth)/canvas1.width)));
                   
                     //construct message to pass to the worker
                     var workerMessage = {

@@ -1,8 +1,8 @@
 
 
-var bp = 1; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
+var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION = 60;  // maximum number of tokens
+var PRECISION = 30;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
@@ -186,6 +186,41 @@ Big.prototype.times = function (y, prec) {
     return res;
 
 
+}
+
+
+//**************************************************************************************
+//                               I N T E G E R     D I V I S I O N  
+//**************************************************************************************
+// this function divides a big number (this) by an integer (y). we assume y is not zero.
+
+Big.prototype.divint = function (y, prec) {
+
+    var res = new Big(); // to store the result
+    if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
+
+    // The sign of the result is the same unless y is negative. 
+    res.s = (y > 0) ? this.s : -this.s;
+
+    var q = 0;
+    var i = this.v.length - 1;
+    var r = this.v[i];
+    var rl = 0;   // length of the result
+    res.e = this.e;
+
+    while ((rl < PRECISION) && ((i >= 0) || (r != 0))) {
+        i--;
+        q = Math.floor(r / y);
+        rl = res.v.unshift(q); // store the digits at the start of the array. unshift returns the new length
+        if (res.v[rl - 1] == 0) { // if there is a leading zero
+            res.v.pop(); // remove the leading zero
+            res.e -= 1;  // decrement the exponent
+            rl--;  // make sure you dont count the zero as a significant digit in the comparison with PRECISION
+        }
+        r = base * (r % y) + (isNaN(this.v[i]) ? 0 : this.v[i])  // this is the new number to divide in the next iteration
+    }
+
+    return res;
 }
 
 //**************************************************************************************
@@ -379,5 +414,7 @@ Big.prototype.compare = function (y) {
     return 0; // at this point, we have finished looping, so the two numbers are equal
 
 }
+
+
 
 
