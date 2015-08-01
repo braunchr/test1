@@ -24,15 +24,15 @@ self.onmessage = function (e) {
     var subx2 = new Big(0);
     var suby1 = new Big(0);
 
-    subx1['c'] = e.data.subx1c;
+    subx1['v'] = e.data.subx1v;
     subx1['e'] = e.data.subx1e;
     subx1['s'] = e.data.subx1s;
 
-    subx2['c'] = e.data.subx2c;
+    subx2['v'] = e.data.subx2v;
     subx2['e'] = e.data.subx2e;
     subx2['s'] = e.data.subx2s;
 
-    suby1['c'] = e.data.suby1c;
+    suby1['v'] = e.data.suby1v;
     suby1['e'] = e.data.suby1e;
     suby1['s'] = e.data.suby1s;
 

@@ -231,6 +231,21 @@ Big.prototype.plus = function (y, prec) {
 
     var res = new Big();
     var x = this;
+
+    if (x.s != y.s) { // if the addition is between 2 numbers with different signs, it is a subtraction
+        if (x.s = -1) { 
+            x.s = -x.s; // change the sign of x
+            res = y.minus(x, prec);  //perform a subtraction instead of an addition
+            x.s = -x.s; // put the sign of x back to its original state
+            return res;
+        } else {
+            y.s = -y.s; // change the sign of y
+            res = x.minus(y, prec);  //perform a subtraction instead of an addition
+            y.s = -y.s; // put the sign of y back to its original state
+            return res;
+        }
+    }
+
     var eo = x.e - y.e; // the exponent offset between the 2 numbers
     var carry; // flag
     var so; // starting offset
