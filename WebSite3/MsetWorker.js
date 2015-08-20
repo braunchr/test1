@@ -2,9 +2,6 @@ importScripts("Mset.js");
 importScripts("ImageBit.js");
 importScripts("Bignum.js");
 
-//global variable
-var precision = 20;
-
 self.onmessage = function (e) {
 
     //get the data from the event
@@ -19,6 +16,7 @@ self.onmessage = function (e) {
     var imgData = e.data.imgData;
     var subwidth=e.data.subwidth;
     var subheight = e.data.subheight;
+    var precision = e.data.precision;
 
     var subx1 = new Big(0);
     var subx2 = new Big(0);

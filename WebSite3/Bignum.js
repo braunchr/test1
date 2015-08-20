@@ -150,42 +150,49 @@ Big.prototype.times = function (y, prec) {
     var res = new Big(); // to store the result
     if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
 
-    // The sign of the result is -1 if the factor signs are the same, -1 otherwise. 
-    res.s = (this.s == y.s) ? 1 : -1;
+    if (y instanceof Big) {
+        // The sign of the result is -1 if the factor signs are the same, -1 otherwise. 
+        res.s = (this.s == y.s) ? 1 : -1;
 
-    // initialises the array to store the result. We have to initialise it to Zero because we add to it in the body. 
-    for (var ind = 0 ; ind < this.v.length + y.v.length; ind++)
-        res.v[ind] = 0;
+        // initialises the array to store the result. We have to initialise it to Zero because we add to it in the body. 
+        for (var ind = 0 ; ind < this.v.length + y.v.length; ind++)
+            res.v[ind] = 0;
 
-    for (var i = 0; i < this.v.length; i++)     // this is the main loop. it is o(N2) in length because it's a double loop. 
-        for (var j = 0; j < y.v.length; j++) {
-            var t = this.v[i] * y.v[j] + res.v[i + j];  // store the result of the multiplication and add any previously held carry. 
-            res.v[i + j] = t % base;  //remainder
-            if (t >= base) {// if we have a carry, add it to the next token    
-                res.v[i + j + 1] += ~~(t / base); //use the bitwise operator to truncate 32 bits before adding it.    
+        for (var i = 0; i < this.v.length; i++)     // this is the main loop. it is o(N2) in length because it's a double loop. 
+            for (var j = 0; j < y.v.length; j++) {
+                var t = this.v[i] * y.v[j] + res.v[i + j];  // store the result of the multiplication and add any previously held carry. 
+                res.v[i + j] = t % base;  //remainder
+                if (t >= base) {// if we have a carry, add it to the next token    
+                    res.v[i + j + 1] += ~~(t / base); //use the bitwise operator to truncate 32 bits before adding it.    
+                }
             }
+
+        if (res.v[i + j - 1] == 0) { // if the last element is zero - this is the most significant token
+            res.v.pop();  // remove it because we have no carry and no need for leading zeros]
+            res.e = this.e + y.e;
+        }
+        else {
+            res.e = this.e + y.e + 1;
         }
 
-    if (res.v[i + j - 1] == 0) { // if the last element is zero - this is the most significant token
-        res.v.pop();  // remove it because we have no carry and no need for leading zeros]
-        res.e = this.e + y.e;
+
+        //Round for precision. Setting the length property truncates the array.
+        if (res.v.length > PRECISION) res.v.length = PRECISION;
+
+        //Remove trailing zeros
+        while (res.v[0] == 0 && res.v.length > 1)
+            res.v.shift();
+
+        return res;
+
+    } else {  // if y was passsed as a number
+        res.s = (y >= 0) ? this.s : -this.s;
+        res.e = this.e;
+       
+        for (var i = 0; i < this.v.length; i++)     // multiply every token by the integer. This works because base is less or equal to 7 and we have no overflow
+                 res.v[i] = this.v[i]*y; //use the bitwise operator to truncate 32 bits before adding it.    
+        return res;
     }
-    else {
-        res.e = this.e + y.e + 1;
-    }
-
-
-    //Round for precision. Setting the length property truncates the array.
-    if (res.v.length > PRECISION) res.v.length = PRECISION;
-
-    //Remove trailing zeros
-    while (res.v[0] == 0 && res.v.length > 1)
-        res.v.shift();
-
-
-    return res;
-
-
 }
 
 
@@ -231,6 +238,17 @@ Big.prototype.plus = function (y, prec) {
 
     var res = new Big();
     var x = this;
+
+    if (x.v[x.v.length - 1] == 0) {
+        res = y;
+        return res;
+    }
+
+    if (y.v[y.v.length - 1] == 0) {
+        res = x;
+        return res;
+    }
+
 
     if (x.s != y.s) { // if the addition is between 2 numbers with different signs, it is a subtraction
         if (x.s = -1) { 
@@ -390,44 +408,54 @@ Big.prototype.minus = function (y, prec) {
 //
 Big.prototype.compare = function (y) {
 
-    var x = this;
-    var xt, yt, i, numiter;
+    if (y instanceof Big) { // if y is passed as a bignum instead of an integer
 
-    if (x.s == 1 && y.s == -1) return 1; // compare the signs first
-    if (x.s == -1 && y.s == 1) return -1;
+        var x = this;
+        var xt, yt, i, numiter;
 
-    // at this stage, we know the signs are the same
+        if (x.s == 1 && y.s == -1) return 1; // compare the signs first
+        if (x.s == -1 && y.s == 1) return -1;
 
-    if (x.e > y.e)
-        return (x.s == 1) ? 1 : -1; // then compare the exponents
-    if (x.e < y.e)
-        return (x.s == -1) ? 1 : -1; // then compare the exponents
+        // at this stage, we know the signs are the same
+
+        if (x.e > y.e)
+            return (x.s == 1) ? 1 : -1; // then compare the exponents
+        if (x.e < y.e)
+            return (x.s == -1) ? 1 : -1; // then compare the exponents
 
 
-    // at this stage the exponents are the same and the signs are the same
+        // at this stage the exponents are the same and the signs are the same
 
-    if (x.v.length > y.v.length) {
-        numiter = x.v.length;
-        xo = 0;
-        yo = x.v.length - y.v.length;
+        if (x.v.length > y.v.length) {
+            numiter = x.v.length;
+            xo = 0;
+            yo = x.v.length - y.v.length;
+        }
+        else {
+            numiter = y.v.length;
+            yo = 0;
+            xo = y.v.length - x.v.length;
+        }
+
+        for (i = numiter - 1; i >= 0; i--) {
+            xt = isNaN(x.v[i - xo]) ? 0 : x.v[i - xo];
+            yt = isNaN(y.v[i - yo]) ? 0 : y.v[i - yo];
+
+            if (xt > yt) return (x.s == 1) ? 1 : -1; // x has the largest absolute value
+            else if (xt < yt) return (x.s == 1) ? -1 : 1; // y has the largest absolute vaule
+
+        }
+
+        return 0; // at this point, we have finished looping, so the two numbers are equal
     }
-    else {
-        numiter = y.v.length;
-        yo = 0;
-        xo = y.v.length - x.v.length;
-    }
 
-    for (i = numiter - 1; i >= 0; i--) {
-        xt = isNaN(x.v[i - xo]) ? 0 : x.v[i - xo];
-        yt = isNaN(y.v[i - yo]) ? 0 : y.v[i - yo];
-
-        if (xt > yt) return (x.s == 1) ? 1 : -1; // x has the largest absolute value
-        else if (xt < yt) return (x.s == 1) ? -1 : 1; // y has the largest absolute vaule
+    else {  // if y was passed as a number instead of a big number, we take an approximation of the number as the first digit
+        var xapprox = this.s * this.v[this.v.length - 1] * 10 ^ this.e;
+        if (xapprox>y) return 1;
+        if (xapprox < y) return -1;
+        if (xapprox = y) return 0;
 
     }
-
-    return 0; // at this point, we have finished looping, so the two numbers are equal
-
 }
 
 

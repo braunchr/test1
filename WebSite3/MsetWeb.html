@@ -64,9 +64,9 @@
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
 
-            $("#out1").val(-2.5) ;
-            $("#out2").val(1.2);
-            $("#out3").val(1);
+            $("#out1").val(-0.1) ;  // start with -2.5
+            $("#out2").val(0.1);  // start with 1.2
+            $("#out3").val(0.2);    // start with 1
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
             paintThreadSet(imgDt);
@@ -295,12 +295,12 @@
             var col3 = $("#color3").val();
 
             var maxMult = parseFloat($("#iterationMultiplier").val());
-            var maxiter = Math.max(100, Math.floor(Math.abs(200 * Math.log(x2 - x1)) * maxMult));
+            var maxiter = Math.max(100, Math.floor(Math.abs(200 * x2.minus(x1).e * maxMult)));  //note that x2.minus(x1).e is a proxy for the log function so it is like log(x2-x1)  
             
             $('#out5').val(maxiter);
 
             var threshMult = parseFloat($("#threshMult").val());
-            var threshold = Math.floor(10 + Math.abs(Math.log(x2 - x1))) * threshMult;
+            var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
             $('#out6').val(threshold);
 
             
@@ -388,9 +388,9 @@
 
 
 <body onload="init();">
-    <div style="width: 400px;" >
+    <div style="width: 140px;" >
     
-        <div id="canvasContainer" style="position:relative; height:300px; " >
+        <div id="canvasContainer" style="position:relative; height:130px; " >
             <canvas id="canvas1" ></canvas>
             <canvas id="canvas2" ></canvas>
         </div>

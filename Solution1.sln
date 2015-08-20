@@ -24,6 +24,11 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "WebSite3(1)", "http://local
 		SlnRelativePath = "WebSite3\"
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7EC208C9-BB4D-4686-A4AA-6C40D86E5057}"
+	ProjectSection(SolutionItems) = preProject
+		..\Mandel_Machine_1.3.13_x64 (2)\mm\FractalCanvas.java = ..\Mandel_Machine_1.3.13_x64 (2)\mm\FractalCanvas.java
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

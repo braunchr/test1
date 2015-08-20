@@ -78,6 +78,7 @@ ImageBit.prototype.setPixel = function (i, j, r, g, b) {
     this.imgData.data[index + 1] = g;
     this.imgData.data[index + 2] = b;
     this.imgData.data[index + 3] = 255;
+
 }
 
 

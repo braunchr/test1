@@ -51,10 +51,10 @@ MSet.prototype.paint = function (imgbit) {
                     imgbit.setPixel(i, j, 50, 50, 200); // the point is out of the set
             }
 
-            cx = (cx.plus(imgbit.xyIncrement)).round(precision); //increment the x axis by one pixel
+            cx = cx.plus(imgbit.xyIncrement); //increment the x axis by one pixel
         }
         cx = imgbit.x1; // reset the x axis for the next line
-        cy = (cy.minus(imgbit.xyIncrement)).round(precision);  // increment the y axis by one pixel
+        cy = cy.minus(imgbit.xyIncrement);  // increment the y axis by one pixel
     }
     return imgbit;
 }
@@ -71,13 +71,13 @@ MSet.prototype.distance = function(cx, cy)
 
     this.xorbit[0] = this.yorbit[0] = new Big(0);
   
-    while ((iter < this.maxiter) && ((x2.plus(y2)).lt(4)))
+    while ((iter < this.maxiter) && ((x2.plus(y2)).compare(4)<0))
     {
-        temp = (x2.minus(y2).plus(cx)).round(precision);
-        y = (x.times(2).times(y).plus(cy)).round(precision);
+        temp = (x2.minus(y2).plus(cx));
+        y = (x.times(2).times(y).plus(cy));
         x = temp;
-        x2 = x.times(x).round(precision);
-        y2 = y.times(y).round(precision);
+        x2 = x.times(x);
+        y2 = y.times(y);
         iter++;
         //if (iter == 22) debugger;
         this.xorbit[iter] = x;
