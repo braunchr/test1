@@ -287,6 +287,13 @@ Big.prototype.plus = function (y, prec) {
     xo = x.v.length - x.e - 1;  // the x offset represents the number of digits after the decimal points of x . Will be needed to align
     yo = y.v.length - y.e - 1;  // the y offset represents the number of digits after the decimal points of y . Will be needed to align
 
+    // check if the distance between the numbers is beyond the precision, then the addition and/or the subtraction does not need to be done as one number dwarfs the other. 
+    // simply return x after copying it into res
+    if (Math.abs(xo - yo) > PRECISION) {
+        for (var i = 0; i < x.v.length; i++) res.v[i] = x.v[i];
+        return res;
+    }
+
     // to align the numbers, we have to shift xo and yo until one is zero and the otherone negative. Always keep the same distance.
     // First if they both are negative (for example for large exponents if we have trailing zeros)
     while (xo < 0 && yo < 0) { xo++; yo++ };  // tets with 1e5 and 1e7
@@ -359,17 +366,24 @@ Big.prototype.minus = function (y, prec) {
     xo = x.v.length - x.e - 1;  // the x offset represents the number of digits after the decimal points of x . Will be needed to align
     yo = y.v.length - y.e - 1;  // the y offset represents the number of digits after the decimal points of y . Will be needed to align
 
+    // check if the distance between the numbers is beyond the precision, then the addition and/or the subtraction does not need to be done as one number dwarfs the other. 
+    // simply return x after copying it into res
+    if (Math.abs(xo-yo)>PRECISION) {
+        for (var i = 0; i < x.v.length; i++) res.v[i] = x.v[i];
+        return res;
+    }
+
     // to align the numbers, we have to shift xo and yo until one is zero and the otherone negative. Always keep the same distance.
     // First if they both are negative (for example for large exponents if we have trailing zeros)
     while (xo < 0 && yo < 0) { xo++; yo++ };  // tets with 1e5 and 1e7
 
-    // Second if one of them is positive. Shift down so that the largest one (whichever that is) lands at zero. This is where we start the addition. 
+    // Second if one of them is positive. Shift down so that the largest one (whichever that is) lands at zero. This is where we start the subtraction. 
     while (xo > 0 || yo > 0) { xo--; yo-- };  // test with 1 and 1e-2 or 1.234 and 1e-1.  
 
     // at this point, the numbers are aligned with their offsets in place xo and yo. One is zero and the other negative. 
     // if the lentgh of the result is greater than the required precision, then 
     // truncate to the precision. for example 10^3 + 10^-7
-    // this will be done by starting the addition of x and y at the Starting Offset (SO).
+    // this will be done by starting the subtraction of x and y at the Starting Offset (SO).
     (reslen > PRECISION) ? so = reslen - PRECISION : so = 0;
 
     for (var i = so; i < reslen; i++) { //loop for the main addition start at so
@@ -416,7 +430,15 @@ Big.prototype.compare = function (y) {
         if (x.s == 1 && y.s == -1) return 1; // compare the signs first
         if (x.s == -1 && y.s == 1) return -1;
 
-        // at this stage, we know the signs are the same
+        // at this stage, we know the signs are the same , check if x or y are zero
+
+        if (x.v == 0 && y.v == 0) return 0; // both numbers are zero
+        else if (x.v == 0 && y.v != 0)
+            return (y.s == 1) ? -1 : 1; // then compare the exponents
+        else if (y.v == 0 && x.v != 0)
+            return (x.s == 1) ? 1 : -1; // then compare the exponents
+
+        // at this stage, we know the signs are the same and the numbers are not zero
 
         if (x.e > y.e)
             return (x.s == 1) ? 1 : -1; // then compare the exponents
@@ -450,8 +472,10 @@ Big.prototype.compare = function (y) {
     }
 
     else {  // if y was passed as a number instead of a big number, we take an approximation of the number as the first digit
-        var xapprox = this.s * this.v[this.v.length - 1] * 10 ^ this.e;
-        if (xapprox>y) return 1;
+       
+        xapprox = this.s * this.v[this.v.length - 1] * Math.pow(10, this.e * bp);
+
+        if (xapprox > y) return 1;
         if (xapprox < y) return -1;
         if (xapprox = y) return 0;
 

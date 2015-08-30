@@ -43,6 +43,7 @@ MSet.prototype.paint = function (imgbit) {
         for (var i = 0; i < imgbit.width; i++) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
+
                 dist = this.distance(cx, cy);
 
                 if (dist == 0)
