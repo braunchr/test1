@@ -3,7 +3,7 @@ importScripts("Bignum.js");
 
 
 //******************************************************************
-//                        MSET - CONSTRUCTOR 
+//                        MSET - CONSTRUCTOR
 //*******************************************************************
 function MSet(maxiter, threshold, color1, color2, color3) 
 {
