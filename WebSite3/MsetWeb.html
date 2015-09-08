@@ -64,9 +64,9 @@
             mouseWindowWidth = canvas1.width / 5 + 1;
             mouseWindowHeight = canvas1.height / 5 + 1;
 
-            $("#out1").val(-2.5) ;  // start with -2.5
+            $("#out1").val(-1.5) ;  // start with -2.5
             $("#out2").val(1.2);  // start with 1.2
-            $("#out3").val(1);    // start with 1
+            $("#out3").val(0.6);    // start with 1
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
             paintThreadSet(imgDt);
@@ -295,7 +295,7 @@
             var col3 = $("#color3").val();
 
             var maxMult = parseFloat($("#iterationMultiplier").val());
-            var maxiter = Math.max(100, Math.floor(Math.abs(200 * x2.minus(x1).e * maxMult)));  //note that x2.minus(x1).e is a proxy for the log function so it is like log(x2-x1)  
+            var maxiter = maxMult*Math.max(100, Math.floor(Math.abs(200 * x2.minus(x1).e)));  //note that x2.minus(x1).e is a proxy for the log function so it is like log(x2-x1)  
             
             $('#out5').val(maxiter);
 
@@ -304,7 +304,7 @@
             $('#out6').val(threshold);
 
             
-            var numworkers = 8;
+            var numworkers = 5;
             
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
             
@@ -388,9 +388,9 @@
 
 
 <body onload="init();">
-    <div style="width: 140px;" >
+    <div style="width: 100px;" >
     
-        <div id="canvasContainer" style="position:relative; height:130px; " >
+        <div id="canvasContainer" style="position:relative; height:100px; " >
             <canvas id="canvas1" ></canvas>
             <canvas id="canvas2" ></canvas>
         </div>
@@ -432,7 +432,7 @@
             <input id="out1"; >
             <label >Y1</label>
             <input id="out2"; >
-            <label >Y2</label>
+            <label >X2</label>
             <input id="out3"; >
        
                     
