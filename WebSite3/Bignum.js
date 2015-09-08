@@ -2,7 +2,7 @@
 
 var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION =2;  // maximum number of tokens
+var PRECISION =17;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
@@ -113,13 +113,16 @@ function Big(n) {
 // this method simply formats a bignum in a decimal string so that it can be displayed
 //**************************************************************************************
 
-Big.prototype.format = function () {
+Big.prototype.format = function (numTokens) {  // n is the number of tokens to display 
 
+    
     // start with the sign
     var st = (this.s == 1) ? '+' : '-';
     var v = this.v;
     var e = this.e.toString();
     var tok1 = v[v.length - 1].toString();
+    var maxLength = 0;
+    if (!isNaN(numTokens)) maxLength = v.length - numTokens;  // if a precision was passed, then store it. 
 
 
     //add the first token and the decimal point
@@ -127,7 +130,7 @@ Big.prototype.format = function () {
     st = st.concat(tok1.slice(0, 1), '.', tok1.slice(1));
 
 
-    for (var i = v.length - 2; i >= 0; i--) {
+    for (var i = v.length - 2; i >= 0 && i >= maxLength ; i--) {
 
         for (var pad = bp; v[i].toString().length < pad; pad--) { st = st.concat('0'); } //pad with zeros
         st = st.concat(v[i].toString());
@@ -144,9 +147,9 @@ Big.prototype.format = function () {
 //**************************************************************************************
 //                               M U L T I P L I C A T I O N 
 //**************************************************************************************
+// this function multiplies a big number (this) by another number (y) big number or integer.
 
 Big.prototype.times = function (y, prec) {
-
     var res = new Big(); // to store the result
     var x = this; 
     if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
@@ -193,14 +196,13 @@ Big.prototype.times = function (y, prec) {
             res.e = x.e + y.e + 1;
         }
 
-
-        //Remove trailing zeros or round for precision by truncating from the least significant digit
+        //Remove trailing zeros and rounds for precision by truncating from the least significant digit
         while ((res.v[0] == 0 && res.v.length > 1) || (res.v.length > PRECISION))
             res.v.shift();
 
         return res;
 
-    } else {  // if y was passsed as a number
+    } else {  // if y was passsed as a number which we assume is an integer
         res.s = (y >= 0) ? x.s : -x.s;
         res.e = x.e;
        
