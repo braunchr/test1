@@ -2,7 +2,7 @@
 
 var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION =17;  // maximum number of tokens
+var PRECISION =2;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
@@ -108,8 +108,27 @@ function Big(n) {
 }
 
 //**************************************************************************************
-//                                  F O R M A T 
+//                                  T O    F L O  A  T
+//
+// Converts the big number in a float number with a given number of tokens
+//**************************************************************************************
 
+Big.prototype.toFloat = function() { //n is optionally the number of tokens to parse
+
+    var res = 0;
+    var n = Math.min(this.v.length, 1 + Math.floor(17 / bp)); //n is however many tokens fit in a floating number
+
+    for (var i = 1 ; i <= n; i++) {
+        res += this.v[this.v.length - i] / Math.pow(base, i - 1);
+    }
+
+    res = res * this.s * Math.pow(10, this.e);
+
+    return res;
+}
+
+//**************************************************************************************
+//                                  F O R M A T 
 // this method simply formats a bignum in a decimal string so that it can be displayed
 //**************************************************************************************
 
@@ -143,6 +162,7 @@ Big.prototype.format = function (numTokens) {  // n is the number of tokens to d
     st = st.concat(' E', e * bp + tok1.length - 1);
     return (st);
 }
+
 
 //**************************************************************************************
 //                               M U L T I P L I C A T I O N 
