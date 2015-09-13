@@ -37,6 +37,7 @@ MSet.prototype.paint = function (imgbit) {
 
     var cx = imgbit.x1;
     var cy = imgbit.y1;
+    var xyInc = imgbit.xyIncrement.toFloat();
     var dist = 0;
 
     for (var j = 0; j < imgbit.height; j++) {
@@ -44,29 +45,24 @@ MSet.prototype.paint = function (imgbit) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
 
-                dist = this.distance(cx, cy);
-      
+                dist = 0.25 * this.distance(cx, cy);
+                var radius = Math.floor(dist / xyInc);
 
-
-                if (dist > this.maxiter / this.threshold)  {
-                    imgbit.setPixel(i, j, this.col3[0], this.col3[1], this.col3[2]); // the point is outside the set
+                if (radius > 1) {
+                    //imgbit.setPixel(i, j, this.col1[0], this.col1[1], this.col1[2]); // the point is outside the set
+                    imgbit.fillDisk(i, j, radius, this.col1[0], this.col1[1], this.col1[2]); //draw a circle and fill it. 
                 }
-                else if (dist < this.maxiter / this.threshold && dist > 1) {
+                else if (dist > xyInc / this.threshold && dist >= 4 * xyInc / this.threshold) {
                     imgbit.setPixel(i, j, this.col2[0], this.col2[1], this.col2[2]); // the point is just outside the set
+                }
+                else if (dist > xyInc / this.threshold && dist < 4 * xyInc / this.threshold) {
+                    imgbit.setPixel(i, j, this.col3[0], this.col3[1], this.col3[2]); // the point is just outside the set
 
                 }
                 else {
                     imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
                 }
 
-
-
-
-
-                //if (dist == 0)
-                //    imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
-                //else
-                //    imgbit.setPixel(i, j, 50, 50, 200); // the point is out of the set
             }
 
             cx = cx.plus(imgbit.xyIncrement); //increment the x axis by one pixel
@@ -75,67 +71,8 @@ MSet.prototype.paint = function (imgbit) {
         cy = cy.minus(imgbit.xyIncrement);  // increment the y axis by one pixel
     }
     return imgbit;
-
-    /*
+}
   
-//***************************************************************
-//                           PAINT
-// Entry function called to fill an image with the set data. 
-// fills an image Bitmap of given height and width by iterating through the pixels. 
-// if a pixel is already painted, then dont compute it. 
-//***************************************************************
-MSet.prototype.paint = function (imgbit) {
-
-    for (var j = 0; j < imgbit.height; j++) {
-        for (var i = 0; i < imgbit.width; i++) {
-            if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
-            {
-                this.paintDisk(i, j, imgbit);
-            }
-        }
-    }
-    return imgbit;
-}  
-//****************************************************************
-//                           PAINTDISK
-// Calculates whether the point at pixel coordinate i,j is in the set
-// Do this by estimating the lower bound of the distance to the set
-// If this lower distance is more than a pixel, then draw a disc
-// Otherwise, paint a discrete pixel of different color depending on distance
-//****************************************************************
-
- MSet.prototype.paintDisk = function( i,  j, imgbit)  
-{
-
-    var x = imgbit.x1 + i / imgbit.pixOverX;
-    var y = imgbit.y1 - j / imgbit.pixOverX;
-
-    var dist = 0.25 * this.distance(x, y);
-    var radius = Math.floor(dist * imgbit.pixOverX);
-
-    if (radius > 1)
-    {
-        imgbit.fillDisk(i, j, radius, this.col1[0], this.col1[1], this.col1[2]); //draw a circle and fill it. 
-        }
-    else if (dist > 1 / imgbit.pixOverX / this.threshold && dist >= 4 / imgbit.pixOverX / this.threshold) {
-        imgbit.setPixel(i, j, this.col2[0], this.col2[1], this.col2[2]); // the point is just outside the set
-    }
-    else if (dist > 1 / imgbit.pixOverX / this.threshold && dist < 4 / imgbit.pixOverX / this.threshold)
-    {
-     imgbit.setPixel(i, j, this.col3[0], this.col3[1], this.col3[2]); // the point is just outside the set
- 
-    }
-    else
-        {
-        imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
-    }
-}
-    */
-
-
-
-}
-
 
 //***************************************************************
 //                           DISTANCE ESTIMATOR 
@@ -144,11 +81,11 @@ MSet.prototype.paint = function (imgbit) {
 //***************************************************************
 MSet.prototype.distance = function(cx, cy)
 {
-    var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0;
+    var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0, dist = 0;
 
     this.xorbit[0] = this.yorbit[0] = new Big(0);
   
-    while ((iter < this.maxiter) && ((x2.plus(y2)).compare(4)<0))
+    while ((iter < this.maxiter) && ((x2.plus(y2)).compare(10000)<0))
     {
         temp = (x2.minus(y2).plus(cx));
         y = (x.times(2).times(y).plus(cy));
@@ -188,3 +125,46 @@ MSet.prototype.distance = function(cx, cy)
     //return (iter == this.maxiter) ? 0: iter; 
 
 }
+
+
+
+//***************************************************************
+//                           FLOATING POINT DISTANCE ESTIMATOR 
+// Iterates through f(z) = z^2 + C of coordinates cx and cy start at z0=0
+// If after a maximum nr of iterations, the function still converges, then C is in the set 
+//***************************************************************
+MSet.prototype.fdistance = function (cx, cy) {
+
+    var x = 0, y = 0, x2 = 0, y2 = 0, dist = 0, iter = 0, temp = 0, xdc = 0, ydc = 0, i = 0, flag = false;
+    this.xorbit[0] = this.yorbit[0] = 0;
+
+    while ((iter < this.maxiter) && ((x2 + y2) < 10000)) {
+        temp = x2 - y2 + cx;
+        y = 2 * x * y + cy;
+        x = temp;
+        x2 = x * x;
+        y2 = y * y;
+        iter++;
+        this.xorbit[iter] = x;
+        this.yorbit[iter] = y;
+    }
+
+    if ((x2 + y2) > 10000) {
+        xdc = ydc = 0;
+        i = 0;
+        flag = false;
+        while ((i < iter) && (flag == false)) {
+            temp = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
+            ydc = 2 * (this.yorbit[i] * xdc + this.xorbit[i] * ydc);
+            xdc = temp;
+            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
+            i++;
+        }
+        if (flag == false)
+            dist = Math.log(x2 + y2) * Math.sqrt(x2 + y2) / Math.sqrt(xdc * xdc + ydc * ydc);
+    }
+    return dist;
+}
+
+
+
