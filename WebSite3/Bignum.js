@@ -141,7 +141,7 @@ Big.prototype.toFloat = function() { //n is optionally the number of tokens to p
 // this method simply formats a bignum in a decimal string so that it can be displayed
 //**************************************************************************************
 
-Big.prototype.format = function (numTokens) {  // n is the number of tokens to display 
+Big.prototype.toString = function (numTokens) {  // n is the number of tokens to display 
 
     
     // start with the sign

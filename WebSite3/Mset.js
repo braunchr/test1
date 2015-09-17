@@ -1,7 +1,5 @@
 importScripts("Bignum.js");
 
-
-
 //******************************************************************
 //                        MSET - CONSTRUCTOR
 //*******************************************************************
@@ -83,7 +81,7 @@ MSet.prototype.distance = function(cx, cy)
 {
     var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0, dist = 0;
 
-    this.xorbit[0] = this.yorbit[0] = new Big(0);
+    this.xorbit[0] = this.yorbit[0] = 0; 
   
     while ((iter < this.maxiter) && ((x2.plus(y2)).compare(10000)<0))
     {
@@ -93,23 +91,19 @@ MSet.prototype.distance = function(cx, cy)
         x2 = x.times(x);
         y2 = y.times(y);
         iter++;
-        //if (iter == 22) debugger;
-        this.xorbit[iter] = x;
-        this.yorbit[iter] = y;
+        this.xorbit[iter] = x.toFloat();
+        this.yorbit[iter] = y.toFloat();
     }
  
     if (iter < this.maxiter) { //we have escaped before reaching the max iteration, estimate the distance
-        var xdc = ydc = i = xi = yi = fxi = fyi = fx2 = fy2 =0;
+        var xdc = ydc = i = fxi = fyi = fx2 = fy2 =0;
         var flag = false;
         var t = 0;
 
         while ((i < iter) && (flag == false)) {
             
-            xi = this.xorbit[i].toFloat();
-            yi = this.yorbit[i].toFloat();
-
-            t = 2 * (xi * xdc - yi * ydc) + 1;
-            ydc = 2 * (yi * xdc + xi * ydc);
+            t = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
+            ydc = 2 * (this.yorbit[i] * xdc + this.xorbit[i] * ydc);
             xdc = t;
             flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
             i++;
@@ -166,5 +160,45 @@ MSet.prototype.fdistance = function (cx, cy) {
     return dist;
 }
 
+
+
+
+//***************************************************************
+//                           Attempt at disruption calculation 
+// 
+// 
+//***************************************************************
+MSet.prototype.deltadistance = function (cx, cy) {
+
+    var x = 0, y = 0, x2 = 0, y2 = 0, dist = 0, iter = 0, temp = 0, xdc = 0, ydc = 0, i = 0, flag = false;
+    this.xorbit[0] = this.yorbit[0] = 0;
+
+    while ((iter < this.maxiter) && ((x2 + y2) < 10000)) {
+        temp = x2 - y2 + cx;
+        y = 2 * x * y + cy;
+        x = temp;
+        x2 = x * x;
+        y2 = y * y;
+        iter++;
+        this.xorbit[iter] = x;
+        this.yorbit[iter] = y;
+    }
+
+    if ((x2 + y2) > 10000) {
+        xdc = ydc = 0;
+        i = 0;
+        flag = false;
+        while ((i < iter) && (flag == false)) {
+            temp = 2 * (this.xorbit[i] * xdc - this.yorbit[i] * ydc) + 1;
+            ydc = 2 * (this.yorbit[i] * xdc + this.xorbit[i] * ydc);
+            xdc = temp;
+            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
+            i++;
+        }
+        if (flag == false)
+            dist = Math.log(x2 + y2) * Math.sqrt(x2 + y2) / Math.sqrt(xdc * xdc + ydc * ydc);
+    }
+    return dist;
+}
 
 

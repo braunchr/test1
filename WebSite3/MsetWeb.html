@@ -65,7 +65,7 @@
             mouseWindowHeight = canvas1.height / 5 + 1;
 
             $("#out1").val(-2.5) ;  // start with -2.5
-            $("#out2").val(1);  // start with 1.2
+            $("#out2").val(1.5);  // start with 1.2
             $("#out3").val(1);    // start with 1
 
             imgDt = ctx1.createImageData(canvas1.width, canvas1.height);
@@ -102,47 +102,45 @@
 
             canvas2.onmousewheel = function (e) {
 
-
                 // determine whether we are zooming in or out.
 
                 var relativeCoords = canvas2.relativeMouseCoords(e);
                 var delta = Math.max(-1, Math.min(1, e.wheelDelta));
-                var zoom;
-                if (delta == 1) zoom = 0.7;
-                else zoom = 1.7;
+                if (delta == 1) zoom = new Big(0.7);
+                else zoom = new Big(1.7);
 
                 // stores the old coordinates
 
-                var currX1 = parseFloat($("#out1").val());
-                var currY1 = parseFloat($("#out2").val());
-                var currX2 = parseFloat($("#out3").val());
-                var currxSpan = currX2 - currX1;
-                var currySpan = currxSpan * canvas2.height / canvas2.width;
+                var currX1 = new Big($("#out1").val());
+                var currY1 = new Big($("#out2").val());
+                var currX2 = new Big($("#out3").val());
+                var currxSpan = currX2.minus(currX1);
+                var currySpan = currxSpan.times(canvas2.height).divint(canvas2.width);
 
-                if (currxSpan > 3 && delta == -1) zoom = 1; //dont zoom way out of the image
+                if (currxSpan.toFloat() > 3 && delta == -1) zoom = 1; //dont zoom way out of the image
                 if (delta == -1) $("#iterationMultiplier").val(1); // dont compute when zooming out
                 // Calculate the new coordinates
 
-                var newxSpan = currxSpan * zoom; //first calculate the dimensions of the new window
-                var newySpan = currySpan * zoom;
+                var newxSpan = currxSpan.times(zoom); //first calculate the dimensions of the new window
+                var newySpan = currySpan.times(zoom);
 
                 var xPerc = 1 - ( canvas2.width - relativeCoords.x ) / canvas2.width; // the % of mouse from left
                 var yPerc = 1 - ( canvas2.height - relativeCoords.y) / canvas2.offsetHeight; // the % of mouse from top
 
-                var currX = currX1 + relativeCoords.x / canvas2.width * currxSpan;
-                var currY = currY1 - relativeCoords.y / canvas2.height * currySpan;
+                var currX = currX1.plus(currxSpan.times(relativeCoords.x).divint(canvas2.width));
+                var currY = currY1.minus(currySpan.times(relativeCoords.y).divint(canvas2.height));
 
 
-                var x1 = currX - newxSpan * xPerc;
-                var x2 = x1 + newxSpan;
-                var y1 = currY + newySpan * yPerc;
+                var x1 = currX.minus(newxSpan.times(new Big(xPerc)));
+                var x2 = x1.plus(newxSpan);
+                var y1 = currY.plus( newySpan.times(new Big(yPerc)));
 
 
                 ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
 
-                $("#out1").val(x1);
-                $("#out2").val(y1);
-                $("#out3").val(x2);
+                $("#out1").val(x1.toString());
+                $("#out2").val(y1.toString());
+                $("#out3").val(x2.toString());
 
                 paintThreadSet();
 
@@ -198,9 +196,9 @@
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 }
 
-                $("#out1").val(x1.format());
-                $("#out2").val(y1.format());
-                $("#out3").val(x2.format());
+                $("#out1").val(x1.toString());
+                $("#out2").val(y1.toString());
+                $("#out3").val(x2.toString());
 
                 paintThreadSet();
 
@@ -405,7 +403,7 @@
 
 
 <body onload="init();">
-    <div style="width: 200px;" >
+    <div style="width: 230px;" >
     
         <div id="canvasContainer" style="position:relative; height:200px; " >
             <canvas id="canvas1" ></canvas>
