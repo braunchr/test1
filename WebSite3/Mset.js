@@ -69,7 +69,7 @@ MSet.prototype.paint = function (imgbit) {
     var cy = imgbit.y1;
     var xyInc = imgbit.xyIncrement.toFloat();
     var dist = 0;
-    var step = 2;
+    var step = 8;
 
     for (var j = 0; j < imgbit.height; j++) {
         for (var i = 0; i < imgbit.width; i = i + step) {
@@ -78,12 +78,12 @@ MSet.prototype.paint = function (imgbit) {
 
                 dist = 0.25 * this.refdistance(cx, cy);
                 this.colorise(dist, i, j, xyInc, imgbit);
-/*
+
                 dist = 0.25 * this.deltadistance(xyInc, 0);
                 this.colorise(dist, i + 1, j, xyInc, imgbit);
 
-                //dist = 0.25 * this.refdistance(cx.plus(imgbit.xyIncrement), cy);
-
+                //dist2 = 0.25 * this.refdistance(cx.plus(imgbit.xyIncrement), cy);
+                               
                 dist = 0.25 * this.deltadistance(2 * xyInc, 0);
                 this.colorise(dist, i + 2, j, xyInc, imgbit);
 
@@ -101,7 +101,10 @@ MSet.prototype.paint = function (imgbit) {
 
                 dist = 0.25 * this.deltadistance(7 * xyInc, 0);
                 this.colorise(dist, i + 7, j, xyInc, imgbit);
-*/
+
+                //dist2 = 0.25 * this.refdistance(cx.plus((imgbit.xyIncrement).times(7)), cy);
+                
+
             }
 
             cx = cx.plus(imgbit.xyIncrement.times(step)); //increment the x axis by one pixel
@@ -136,28 +139,28 @@ MSet.prototype.refdistance = function(cx, cy)
         x2 = x.times(x);
         y2 = y.times(y);
 
-        var Anx = this.Axorbit[iter];
-        var Any = this.Ayorbit[iter];
-        var Bnx = this.Bxorbit[iter];
-        var Bny = this.Byorbit[iter];
-        var Cnx = this.Cxorbit[iter];
-        var Cny = this.Cyorbit[iter];
-        var Xnx = this.Xxorbit[iter];
-        var Xny = this.Xyorbit[iter];
+        var Ax = this.Axorbit[iter];
+        var Ay= this.Ayorbit[iter];
+        var Bx = this.Bxorbit[iter];
+        var By= this.Byorbit[iter];
+        var Cx = this.Cxorbit[iter];
+        var Cy= this.Cyorbit[iter];
+        var Xx = this.Xxorbit[iter];
+        var Xy = this.Xyorbit[iter];
 
         // Store the next iteration of the orbit and coefficients of the perturbation
         iter++;
         this.Xxorbit[iter] = x.toFloat();
         this.Xyorbit[iter] = y.toFloat();
 
-        this.Axorbit[iter] = 2 * (Anx * Xnx - Any * Xny) + 1;
-        this.Ayorbit[iter] = 2 * (Anx * Xny + Any * Xnx);
+        this.Axorbit[iter] = 2 * (Ax * Xx - Ay* Xy) + 1;
+        this.Ayorbit[iter] = 2 * (Ax * Xy + Ay* Xx);
 
-        this.Bxorbit[iter] = 2 * (Bnx * Xnx - Bny * Xny) + Anx * Anx - Any * Any;
-        this.Byorbit[iter] = 2 * (Bnx * Xny + Bny * Xnx) + 2 * Anx * Any;
+        this.Bxorbit[iter] = 2 * (Bx * Xx - By* Xy) + Ax * Ax - Ay* Ay;
+        this.Byorbit[iter] = 2 * (Bx * Xy + By* Xx) + 2 * Ax * Ay;
 
-        this.Cxorbit[iter] = 2 * (Cnx * Xnx - Cny * Xny) + 2*(Anx * Bnx - Any * Bny);
-        this.Cyorbit[iter] = 2 * (Cnx * Xny + Cny * Xnx + Anx * Bny + Bnx * Any);
+        this.Cxorbit[iter] = 2 * (Cx * Xx - Cy* Xy) + 2*(Ax * Bx - Ay* By);
+        this.Cyorbit[iter] = 2 * (Cx * Xy + Cy* Xx + Ax * By+ Bx * Ay);
 
     }
 
@@ -175,8 +178,9 @@ MSet.prototype.refdistance = function(cx, cy)
             ydc = 2 * (this.Xyorbit[i] * xdc + this.Xxorbit[i] * ydc);
             xdc = t;
             flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
-            modulus = this.Xxorbit[i] * this.Xxorbit[i] + this.Xyorbit[i] * this.Xyorbit[i];
+            
             i++;
+            modulus = this.Xxorbit[i] * this.Xxorbit[i] + this.Xyorbit[i] * this.Xyorbit[i];
         }
 
         if (flag == false) {
@@ -201,9 +205,9 @@ MSet.prototype.deltadistance = function (deltax, deltay) {
     this.Yxorbit[0] = this.Xxorbit[0] + deltax;
     this.Yyorbit[0] = this.Xyorbit[0] + deltay;
     
-    var x = y = dx = dy = d2c = d2y = d3x = d3y = 0;  // the powers square and cube of delta
-    var term1x = term1y = term2x = term2y = 0; // the three terms of Delta N = AnDn + BnDn^2 + CnDn^3
-    var anx = any = bnx = bny = cnx = cny = 0; // the values of An Bn and Cn
+    var x, y, dx, dy, d2c, d2y, d3x, d3y;  // the powers square and cube of delta
+    var term1x, term1y, term2x, term2y, term3x, term3y = 0; // the three terms of Delta N = AnDn + BnDn^2 + CnDn^3
+    var iter;
     
     // Store the value of Delta
     dx = deltax;
@@ -217,7 +221,9 @@ MSet.prototype.deltadistance = function (deltax, deltay) {
     d3x = dx*d2x - dy*d2y;
     d3y = dy*d2x + dx*d2y;
 
-    var iter = 0;
+    iter = 0;
+    x = 0;
+    y = 0; 
     
     while ((iter < this.maxRefIter) && ( (x*x + y*y) < 10000)) {
 
@@ -245,7 +251,7 @@ MSet.prototype.deltadistance = function (deltax, deltay) {
 
         var i = 0;
         flag = false;
-        while ((i < iter) && (flag == false)) {
+        while ((i < iter-1) && (flag == false)) {
             t = 2 * (this.Yxorbit[i] * xdc - this.Yyorbit[i] * ydc) + 1;
             ydc = 2 * (this.Yyorbit[i] * xdc + this.Yxorbit[i] * ydc);
             xdc = t;
@@ -253,7 +259,7 @@ MSet.prototype.deltadistance = function (deltax, deltay) {
             i++;
         }
         if (flag == false)
-            var modulus = this.Yxorbit[i-1] * this.Yxorbit[i-1] + this.Yyorbit[i-1] * this.Yyorbit[i-1];
+            var modulus = this.Yxorbit[i] * this.Yxorbit[i] + this.Yyorbit[i] * this.Yyorbit[i];
             dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
     }
     return dist;
