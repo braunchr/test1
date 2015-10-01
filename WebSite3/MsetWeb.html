@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="Bignum.js"></script>
- 
+    <script src="Mset.js"></script>
+
     <link rel="stylesheet" type="text/css" href="MsetStyles.css"/>
     
     <script>
@@ -319,7 +320,7 @@
 
             var maxMult = parseFloat($("#iterationMultiplier").val());
             var f = x2.minus(x1).toFloat();
-            var maxiter = Math.floor( maxMult*Math.max(100, Math.abs(30 * Math.log(f))));  //note that x2.minus(x1).e is a proxy for the log function so it is like log(x2-x1)
+            var maxiter = Math.floor( maxMult*Math.max(100, Math.abs(30 * Math.log(f))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
 
             $('#out5').val(maxiter);
 
@@ -327,6 +328,12 @@
             var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
             $('#out6').val(threshold);
 
+            
+            var refx = new Big("-0.543125818776033354");
+            var refy = new Big("0.6164775955475614916");
+            var refSet = new MSet(maxiter, threshold, col1, col2, col3);
+            refSet.xyInc = f / canvas1.width; // this is normally calculated as part of the paint function, but here we pass it because we dont paint the ref point. 
+            refSet.refdistance(refx, refy);
 
             var numworkers = 5;
 
@@ -357,9 +364,9 @@
                         workerID: i*numworkers+j,
                         maxiter: maxiter,
                         threshold: threshold,
-                        px1: xpixel,
+                        px1: xpixel, // the index of the subimage in the full image
                         py1: ypixel,
-                        col1: col1,
+                        col1: col1, // the three colors
                         col2: col2,
                         col3: col3,
                         imgData: imgData,
@@ -367,17 +374,11 @@
                         subheight: subheight,
                         precision: precision,
 
-                        subx1v: subx1['v'],
-                        subx1e: subx1['e'],
-                        subx1s: subx1['s'],
+                        subx1: subx1,
+                        subx2: subx2,
+                        suby1: suby1,
 
-                        subx2v: subx2['v'],
-                        subx2e: subx2['e'],
-                        subx2s: subx2['s'],
-
-                        suby1v: suby1['v'],
-                        suby1e: suby1['e'],
-                        suby1s: suby1['s'],
+                        refSet: refSet,
                     };
 
                     //create the worker.
@@ -388,7 +389,7 @@
                     //Start the worker by posting the data. This triggers the "onmessage" function in the worker file.
                     worker[ind].postMessage(workerMessage);
 
-                    //registers the callback function
+                    //registers the name of the callback function which the worker shoudl call when finished an which is defined later on the UI thread 
                     worker[ind].onmessage = workerCallback;
 
                     ypixel = ypixel + subheight;

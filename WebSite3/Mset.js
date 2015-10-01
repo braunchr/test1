@@ -1,4 +1,4 @@
-importScripts("Bignum.js");
+//importScripts("Bignum.js");
 
 //******************************************************************
 //                        MSET - CONSTRUCTOR
@@ -10,6 +10,8 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.ApproxIndexStart = 0; // Stores the index below which the ABC series approximation is valid. Above this the delta calc must be used
     this.threshold = threshold;// used to color points close to the set
     this.xyInc = 0; // float representation of a pixel size
+    this.xRef = new Big(0);   //stores the coordinates of the Reference point
+    this.yRef = new Big(0); //stores the coordinates of the Reference point
     var MaxArray = 10000;
     this.Xxorbit = new Array(MaxArray);// Stores the orbit of the Refence point X
     this.Xyorbit = new Array(MaxArray);// Declarations of arrays are made here for performance. 
@@ -59,10 +61,11 @@ function MSet(maxiter, threshold, color1, color2, color3)
 MSet.prototype.colorise = function (dist, i, j, xyInc, imgbit) {
 
     var radius = Math.floor(dist / xyInc);
+    
 
     if (radius > 1) {
-        imgbit.setPixel(i, j, this.col1[0], this.col1[1], this.col1[2]); // the point is outside the set
-        //imgbit.fillDisk(i, j, radius, this.col1[0], this.col1[1], this.col1[2]); //draw a circle and fill it. 
+        // imgbit.setPixel(i, j, this.col1[0], this.col1[1], this.col1[2]); // the point is outside the set
+        imgbit.fillDisk(i, j, radius, this.col1[0], this.col1[1], this.col1[2]); //draw a circle and fill it. 
     }
     else if (dist > xyInc / this.threshold && dist >= 4 * xyInc / this.threshold) {
         imgbit.setPixel(i, j, this.col2[0], this.col2[1], this.col2[2]); // the point is just outside the set
@@ -91,18 +94,24 @@ MSet.prototype.paint = function (imgbit) {
     var dist = 0;
     var step = 8;
 
+    // calculate the iterations of the reference point
+    //var cx = imgbit.x1;
+    //var cy = imgbit.y1;
+    //dist = this.refdistance(cx, cy);
+
+    var xRefOffset = -this.xRef.minus(cx).toFloat()
+    var yRefOffset = this.yRef.minus(cy).toFloat();
+    
+
     for (var j = 0; j < imgbit.height; j++) {
-        for (var i = 0; i < imgbit.width; i = i + step) {
+        for (var i = 0; i < imgbit.width; i++) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
 
-                dist = 0.25 * this.refdistance(cx, cy);
-                this.colorise(dist, i, j, xyInc, imgbit);
-                //dist2 = 0.25 * this.refdistance(cx.plus(imgbit.xyIncrement), cy);
-
-                dist = 0.25 * this.deltadistance(xyInc, 0, cx.plus(imgbit.xyIncrement), cy);
-                this.colorise(dist, i + 1, j, xyInc, imgbit);
-
+                
+                dist = 0.25 * this.deltadistance(xRefOffset +i*xyInc, yRefOffset +j*xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.plus(imgbit.xyIncrement.times(j)));
+                this.colorise(dist, i , j, xyInc, imgbit);
+                /*
                 //dist2 = 0.25 * this.refdistance(cx.plus(imgbit.xyIncrement), cy);
                                
                 dist = 0.25 * this.deltadistance(2 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(2)), cy);
@@ -124,15 +133,15 @@ MSet.prototype.paint = function (imgbit) {
                 dist = 0.25 * this.deltadistance(7 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(7)), cy);
                 this.colorise(dist, i + 7, j, xyInc, imgbit);
 
-                //dist2 = 0.25 * this.refdistance(cx.plus((imgbit.xyIncrement).times(7)), cy);
-                
+               
+                */
 
             }
 
-            cx = cx.plus(imgbit.xyIncrement.times(step)); //increment the x axis by one pixel
+            //cx = cx.plus(imgbit.xyIncrement); //increment the x axis by one pixel
         }
-        cx = imgbit.x1; // reset the x axis for the next line
-        cy = cy.minus(imgbit.xyIncrement);  // increment the y axis by one pixel
+        //cx = imgbit.x1; // reset the x axis for the next line
+        //cy = cy.minus(imgbit.xyIncrement);  // increment the y axis by one pixel
     }
 
     return imgbit;
@@ -154,6 +163,14 @@ MSet.prototype.refdistance = function (cx, cy) {
     this.Apxorbit[0] = 0; this.Apyorbit[0] = 0;
     this.Bpxorbit[0] = this.Bpyorbit[0] = 0;
     this.Cpxorbit[0] = this.Cpyorbit[0] = 0;
+
+    //copy has to be deep bause you cant copy objects. 
+    this.xRef.s = cx.s;
+    this.xRef.e = cx.e;
+    this.xRef.v = cx.v;
+    this.yRef.s = cy.s;
+    this.yRef.e = cy.e;
+    this.yRef.v = cy.v;
 
     var computeTaylorSeries = true; //Records if we should continue to compute the ABC series. Typically when the third term is low.
     
@@ -410,9 +427,9 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         }
         if (flag == false)
             var modulus = this.YRxorbit[i] * this.YRxorbit[i] + this.YRyorbit[i] * this.YRyorbit[i];
-        dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
+        distR = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
         */
-        // With the Delta perturbatino exact method
+        // With the Delta perturbation exact method
 
         xdc = ydc = 0;
         flag = false;
@@ -429,30 +446,11 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         }
         if (flag == false)
             var modulus = this.Yxorbit[i] * this.Yxorbit[i] + this.Yyorbit[i] * this.Yyorbit[i];
-        var distD = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
+        var dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
 
-
-        // with the Series Approxumation 
-
-        xdc = ydc = 0;
-        flag = false;
-        t = 0;
-
-        i = 0;
-        flag = false;
-        while ((i < iter ) && (flag == false)) {
-            t = 2 * (this.YAxorbit[i] * xdc - this.YAyorbit[i] * ydc) + 1;
-            ydc = 2 * (this.YAyorbit[i] * xdc + this.YAxorbit[i] * ydc);
-            xdc = t;
-            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
-            i++;
-        }
-        if (flag == false)
-            var modulus = this.YAxorbit[i] * this.YAxorbit[i] + this.YAyorbit[i] * this.YAyorbit[i];
-        distA = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
 
     }
-    return distD;
+    return dist;
 
 
 }
@@ -499,4 +497,43 @@ MSet.prototype.fdistance = function (cx, cy) {
 
 
 
+
+
+//********************************************************************************
+//
+//                           CLONES THE VALUES FROM THE REFERENCE SET
+//
+//********************************************************************************
+MSet.prototype.refCopy = function (m) {
+
+    this.maxRefIter = m.maxRefIter; 
+    this.ApproxIndexStart = m.ApproxIndexStart; 
+    this.xRef.e = m.xRef.e;
+    this.xRef.s = m.xRef.s;
+    this.xRef.v = m.xRef.v;
+    this.yRef.e = m.yRef.e;
+    this.yRef.v = m.yRef.v;
+    this.yRef.s = m.yRef.s;
+
+    this.Xxorbit = m.Xxorbit
+    this.Xyorbit = m.Xyorbit 
+    this.Xpxorbit = m.Xpxorbit
+    this.Xpyorbit = m.Xpyorbit 
+
+    this.Axorbit = m.Axorbit 
+    this.Ayorbit = m.Ayorbit 
+    this.Bxorbit = m.Bxorbit
+    this.Byorbit = m.Byorbit
+    this.Cxorbit = m.Cxorbit
+    this.Cyorbit = m.Cyorbit 
+
+    this.Apxorbit = m.Apxorbit;
+    this.Apyorbit = m.Apyorbit;
+    this.Bpxorbit = m.Bpxorbit;
+    this.Bpyorbit = m.Bpyorbit;
+    this.Cpxorbit = m.Cpxorbit;
+    this.Cpyorbit = m.Cpyorbit;
+
+    
+}
 

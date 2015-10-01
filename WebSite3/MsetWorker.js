@@ -22,17 +22,17 @@ self.onmessage = function (e) {
     var subx2 = new Big(0);
     var suby1 = new Big(0);
 
-    subx1['v'] = e.data.subx1v;
-    subx1['e'] = e.data.subx1e;
-    subx1['s'] = e.data.subx1s;
+    subx1['v'] = e.data.subx1['v'];
+    subx1['e'] = e.data.subx1['e'];
+    subx1['s'] = e.data.subx1['s'];
 
-    subx2['v'] = e.data.subx2v;
-    subx2['e'] = e.data.subx2e;
-    subx2['s'] = e.data.subx2s;
+    subx2['v'] = e.data.subx2['v'];
+    subx2['e'] = e.data.subx2['e'];
+    subx2['s'] = e.data.subx2['s'];
 
-    suby1['v'] = e.data.suby1v;
-    suby1['e'] = e.data.suby1e;
-    suby1['s'] = e.data.suby1s;
+    suby1['v'] = e.data.suby1['v'];
+    suby1['e'] = e.data.suby1['e'];
+    suby1['s'] = e.data.suby1['s'];
 
 
 
@@ -40,6 +40,7 @@ self.onmessage = function (e) {
 
     //call the long computation
     var m = new MSet(maxiter, threshold, col1, col2, col3);
+    m.refCopy(e.data.refSet); // copies the values of the Reference Set
     m.paint(imgbit);
 
     //formats the data to be returned back to the UI thread
