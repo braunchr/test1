@@ -8,6 +8,7 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.maxiter = maxiter; // maximum number of iterations
     this.maxRefIter = 0; // stores the maximum number of iterations before the reference point escapes: The bailout index
     this.ApproxIndexStart = 0; // Stores the index below which the ABC series approximation is valid. Above this the delta calc must be used
+    this.ApproxDerivsIndexStart = 0; // Stores the index below which the A'B'C' derivs series approximation is valid. 
     this.threshold = threshold;// used to color points close to the set
     this.xyInc = 0; // float representation of a pixel size
     this.xRef = new Big(0);   //stores the coordinates of the Reference point
@@ -157,6 +158,7 @@ MSet.prototype.refdistance = function (cx, cy) {
     var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0, dist = 0;
 
     this.Xxorbit[0] = this.Xyorbit[0] = 0;
+    this.Xpxorbit[0] = this.Xpyorbit[0] = 0;
     this.Axorbit[0] = 0; this.Ayorbit[0] = 0;
     this.Bxorbit[0] = this.Byorbit[0] = 0;
     this.Cxorbit[0] = this.Cyorbit[0] = 0;
@@ -173,7 +175,8 @@ MSet.prototype.refdistance = function (cx, cy) {
     this.yRef.v = cy.v;
 
     var computeTaylorSeries = true; //Records if we should continue to compute the ABC series. Typically when the third term is low.
-    
+    var computeDerivsTaylorSeries = true; //Records if we should continue to compute the ABC derivatives series. 
+
     var xdc = ydc = i = fxi = fyi = fx2 = fy2 = 0;
     var flag = false;
     var t = 0;
@@ -186,31 +189,30 @@ MSet.prototype.refdistance = function (cx, cy) {
         x2 = x.times(x);
         y2 = y.times(y);
 
-
         t = 2 * (this.Xxorbit[iter] * xdc - this.Xyorbit[iter] * ydc) + 1;
         ydc = 2 * (this.Xyorbit[iter] * xdc + this.Xxorbit[iter] * ydc);
         xdc = t;
         flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
 
+        if (computeTaylorSeries == true) { // calculate the coefficients of the ABC series recursively until they are no longer precise enough
+            var Ax = this.Axorbit[iter];
+            var Ay = this.Ayorbit[iter];
+            var Bx = this.Bxorbit[iter];
+            var By = this.Byorbit[iter];
+            var Cx = this.Cxorbit[iter];
+            var Cy = this.Cyorbit[iter];
+            var Xx = this.Xxorbit[iter];
+            var Xy = this.Xyorbit[iter];
 
-        var Ax = this.Axorbit[iter];
-        var Ay = this.Ayorbit[iter];
-        var Bx = this.Bxorbit[iter];
-        var By = this.Byorbit[iter];
-        var Cx = this.Cxorbit[iter];
-        var Cy = this.Cyorbit[iter];
-        var Xx = this.Xxorbit[iter];
-        var Xy = this.Xyorbit[iter];
-
-        var Apx = this.Apxorbit[iter];
-        var Apy = this.Apyorbit[iter];
-        var Bpx = this.Bpxorbit[iter];
-        var Bpy = this.Bpyorbit[iter];
-        var Cpx = this.Cpxorbit[iter];
-        var Cpy = this.Cpyorbit[iter];
-        var Xpx = this.Xpxorbit[iter];
-        var Xpy = this.Xpyorbit[iter];
-
+            var Apx = this.Apxorbit[iter];
+            var Apy = this.Apyorbit[iter];
+            var Bpx = this.Bpxorbit[iter];
+            var Bpy = this.Bpyorbit[iter];
+            var Cpx = this.Cpxorbit[iter];
+            var Cpy = this.Cpyorbit[iter];
+            var Xpx = this.Xpxorbit[iter];
+            var Xpy = this.Xpyorbit[iter];
+        }
 
 
         // Store the next iteration of the orbit and coefficients of the perturbation
@@ -244,11 +246,17 @@ MSet.prototype.refdistance = function (cx, cy) {
 
             this.Cpxorbit[iter] = 2 * (Xpx * Cx - Xpy * Cy + Xx * Cpx - Xy * Cpy + Ax * Bpx - Ay * Bpy + Bx * Apx - By * Apy);
             this.Cpyorbit[iter] = 2 * (Xpx * Cy + Xpy * Cx + Xy * Cpx + Xx * Cpy + Ay * Bpx + Ax * Bpy + By * Apx + Bx * Apy);
-        }
 
-        if ((Math.abs(this.xyInc * this.Cxorbit[iter] * 10000) > Math.abs(this.Bxorbit[iter]))) {  // check if C is too large (0.1% of B term)
-            this.ApproxIndexStart = iter;
-            computeTaylorSeries = false;
+            this.ApproxIndexStart++ ;
+
+            if ((Math.abs(this.xyInc * this.Cxorbit[iter] * 100000) > Math.abs(this.Bxorbit[iter]))) {  // check if C is too large (0.1% of B term)
+                computeTaylorSeries = false;
+            }
+
+            if ((Math.abs(this.xyInc * this.Cpxorbit[iter] * 100000) > Math.abs(this.Bpxorbit[iter]))) {  // check if C' is too large (0.1% of B term)
+                computeTaylorSeries = false;
+            }
+
         }
 
         modulus = x2.toFloat() + y2.toFloat();
@@ -256,6 +264,9 @@ MSet.prototype.refdistance = function (cx, cy) {
     }
 
     this.maxRefIter = iter; // this stores the bailout index of the refernce point. 
+
+    if (this.ApproxIndexStart == 0) this.ApproxIndexStart = iter;
+    if (this.ApproxIndexStartp == 0) this.ApproxIndexStartp = iter;
 
     if (iter < this.maxiter && flag == false) { //we have escaped before reaching the max iteration, estimate the distance
         dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
@@ -310,32 +321,35 @@ MSet.prototype.refdistance = function (cx, cy) {
 // C'n+1 = 2(Z'n*Cn + Zn*C'n + An*B'n + Bn*A'n)
 //***************************************************************************************
 MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
-    
-    var dist = 0;
 
-    var x, y, t, dx0, dy0, dx, dy, d2c, d2y, d3x, d3y;  // the powers square and cube of delta
+    var x, y, t, tx,ty, dx0, dy0, dx, dy, d2c, d2y, d3x, d3y;  // the powers square and cube of delta
     var term1x, term1y, term2x, term2y, term3x, term3y; // the three terms of Delta N = AnDn + BnDn^2 + CnDn^3
     var iter;
-    
+    var dpx, dpy; 
+
     var xr = new Big(0);
     var yr = new Big(0);
     var x2 = new Big(0);
     var y2 = new Big(0);
     var temp = new Big(0);
     var dist = 0;
+    var modulus = 0;
 
     this.Xxorbit[0] = this.Xyorbit[0] = 0;
     this.Yxorbit[0] = this.Yyorbit[0] = 0;
+    this.Xpxorbit[0] = this.Xpyorbit[0] = 0;
+    this.Ypxorbit[0] = this.Ypyorbit[0] = 0;
     this.YAxorbit[0] = this.YAyorbit[0] = 0;
     this.YRxorbit[0] = this.YRyorbit[0] = 0;
 
 
-    iter = 0;
     x = 0;
     y = 0;
     dx = 0;
     dy = 0;
-    
+    dpx = 0;
+    dpy = 0;
+
 
     // Using the approximation
     // Store the value of Delta0
@@ -350,66 +364,105 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
     d3x0 = dx0 * d2x0 - dy0 * d2y0;
     d3y0 = dy0 * d2x0 + dx0 * d2y0;
 
-    var xapp, yapp;
-    var done = false;
+    iter = 0;
 
-    
-    while ((iter < this.maxRefIter) && ( (x*x + y*y) < 10000)) {
+    //THIS CODE HAS BEEN TESTED FOR THE APPROXIMATION
+    iter = this.ApproxIndexStart;
 
-  
-        // these calculations are for iter =  N, not N+1 yet. 
-        //use the exact formula Dn+1 = 2*Zn*Dn + Dn*Dn + D0
-         t = 2 * (this.Xxorbit[iter] * dx - this.Xyorbit[iter] * dy) + (dx*dx-dy*dy) + dx0;
-         dy = 2 * (this.Xyorbit[iter] * dx + this.Xxorbit[iter] * dy) + 2 * dx * dy + dy0;
-         dx = t;
-         
+    // calculate the starting poing for hte Taylor function using ABC    
+    term1x = dx0 * this.Axorbit[iter] - dy0 * this.Ayorbit[iter];
+    term1y = dx0 * this.Ayorbit[iter] + dy0 * this.Axorbit[iter];
+    term2x = d2x0 * this.Bxorbit[iter] - d2y0 * this.Byorbit[iter];
+    term2y = d2x0 * this.Byorbit[iter] + d2y0 * this.Bxorbit[iter];
+    term3x = d3x0 * this.Cxorbit[iter] - d3y0 * this.Cyorbit[iter];
+    term3y = d3x0 * this.Cyorbit[iter] + d3y0 * this.Cxorbit[iter];
+    dx = term1x + term2x + term3x;
+    dy = term1y + term2y + term3y;
+   
+    // calculate the starting poing for the Derivative Taylor function using A'B'C'    
+    term1x = dx0 * this.Apxorbit[iter] - dy0 * this.Apyorbit[iter];
+    term1y = dx0 * this.Apyorbit[iter] + dy0 * this.Apxorbit[iter];
+    term2x = d2x0 * this.Bpxorbit[iter] - d2y0 * this.Bpyorbit[iter];
+    term2y = d2x0 * this.Bpyorbit[iter] + d2y0 * this.Bpxorbit[iter];
+    term3x = d3x0 * this.Cpxorbit[iter] - d3y0 * this.Cpyorbit[iter];
+    term3y = d3x0 * this.Cpyorbit[iter] + d3y0 * this.Cpxorbit[iter];
+    dpx = term1x + term2x + term3x;
+    dpy = term1y + term2y + term3y;
+
+    var xdc = 0;
+    var ydc = 0;
+
+    while ((iter < this.maxRefIter) && ((modulus) < 10000)) {
+
+
+
+        ///// PERTURBATION DELTA FORMULA - EXACT AND NOT APPROXIMATED - Dn+1 = 2*Zn*Dn + Dn*Dn + D0
+        //*******************************************************************************************
+        // 
+        tx = 2 * (this.Xxorbit[iter] * dx - this.Xyorbit[iter] * dy) + (dx * dx - dy * dy) + dx0;
+        ty = 2 * (this.Xyorbit[iter] * dx + this.Xxorbit[iter] * dy) + 2 * dx * dy + dy0;
+        
+
+        ///// DERIVATIVE DELTA FORMULA - EXACT AND NOT APPROXIMATED - DZ'n+1 = 2(Z'n*Dn + ZnDZ'n + DZn*DZ'n)
+        //*******************************************************************************************
+        // 
+        t = 2 * (this.Xpxorbit[iter] * dx - this.Xpyorbit[iter] * dy + this.Xxorbit[iter] * dpx - this.Xyorbit[iter] * dpy + dx * dpx - dy * dpy);
+        dpy = 2 * (this.Xpxorbit[iter] * dy + this.Xpyorbit[iter] * dx + this.Xxorbit[iter] * dpy + this.Xyorbit[iter] * dpx + dy * dpx + dx * dpy);
+        dpx = t;
+
+
+
+        //t = 2 * ((new Big(this.Yxorbit[iter])).times(new Big(xdc)).minus(new Big(this.Yyorbit[iter]).times(new Big(ydc)))).toFloat() + 1;
+        //ydc = 2 * ((new Big(this.Yyorbit[iter])).times(new Big(xdc)).plus(new Big(this.Yxorbit[iter]).times(new Big(ydc)))).toFloat();
+        //xdc = t;
+        //t = 2 * (this.Yxorbit[iter] * xdc - this.Yyorbit[iter] * ydc) + 1;
+        //ydc = 2 * (this.Yyorbit[iter] * xdc + this.Yxorbit[iter] * ydc);
+        //xdc = t;
+
+        dx = tx;
+        dy = ty;
+
+
+        /*
         //===Calculation of the ref point. again, using N, not N+1
-    /*
-         temp = (x2.minus(y2).plus(cx));
-         yr = (xr.times(2).times(yr).plus(cy));
-         xr = temp;
-         x2 = xr.times(xr);
-         y2 = yr.times(yr);
-         */
+        temp = (x2.minus(y2).plus(cx));
+        yr = (xr.times(2).times(yr).plus(cy));
+        xr = temp;
+        x2 = xr.times(xr);
+        y2 = yr.times(yr);
+        */
 
-         iter++;  // we now go to N+1
+        iter++;  // we now go to N+1
 
-        // first with the Delta exact forumula
-         x = this.Xxorbit[iter] + dx;
-         y = this.Xyorbit[iter] + dy;
-         this.Yxorbit[iter] = x;
-         this.Yyorbit[iter] = y;
-    
+        // DERIVATIVE
+        a = this.Xpxorbit[iter] + dpx;
+        b = this.Xpyorbit[iter] + dpy;
+
+        this.Ypxorbit[iter] = this.Xpxorbit[iter] + dpx;
+        this.Ypyorbit[iter] = this.Xpyorbit[iter] + dpy;
+
+        // With the Delta exact forumula
+        x = this.Xxorbit[iter] + dx;
+        y = this.Xyorbit[iter] + dy;
+        this.Yxorbit[iter] = x;
+        this.Yyorbit[iter] = y;
+
+        modulus = x * x + y * y;
+        
+
         /*
         // then with the exact high precision Mandelbrot forumla
         this.YRxorbit[iter] = xr.toFloat();
         this.YRyorbit[iter] = yr.toFloat();
-
-        // finally with the series approximation formula
         */
-
-        
-        if (iter == this.ApproxIndexStart && done == false) {
-
-            term1x = dx0 * this.Axorbit[iter] - dy0 * this.Ayorbit[iter];
-            term1y = dx0 * this.Ayorbit[iter] + dy0 * this.Axorbit[iter];
-            term2x = d2x0 * this.Bxorbit[iter] - d2y0 * this.Byorbit[iter];
-            term2y = d2x0 * this.Byorbit[iter] + d2y0 * this.Bxorbit[iter];
-            term3x = d3x0 * this.Cxorbit[iter] - d3y0 * this.Cyorbit[iter];
-            term3y = d3x0 * this.Cyorbit[iter] + d3y0 * this.Cxorbit[iter];
-            xapp = term1x + term2x + term3x;
-            yapp = term1y + term2y + term3y;
-            this.YAxorbit[iter] = this.Xxorbit[iter] + xapp;
-            this.YAyorbit[iter] = this.Xyorbit[iter] + yapp;
-            dx = xapp;
-            dy = yapp;
-            done = true;
-        }
-
     }
 
     
+
+
     if (x * x + y * y > 10000) {
+        dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(a * a + b * b);
+
         /*
         //////// with the Refernce point
         var xdc = ydc = 0;
@@ -429,15 +482,18 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
             var modulus = this.YRxorbit[i] * this.YRxorbit[i] + this.YRyorbit[i] * this.YRyorbit[i];
         distR = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
         */
-        // With the Delta perturbation exact method
 
+
+
+        // With the Delta perturbation exact method
+        /*
         xdc = ydc = 0;
         flag = false;
         t = 0;
 
         i = 0;
         flag = false;
-        while ((i < iter ) && (flag == false)) {
+        while ((i < iter) && (flag == false)) {
             t = 2 * (this.Yxorbit[i] * xdc - this.Yyorbit[i] * ydc) + 1;
             ydc = 2 * (this.Yyorbit[i] * xdc + this.Yxorbit[i] * ydc);
             xdc = t;
@@ -446,9 +502,10 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         }
         if (flag == false)
             var modulus = this.Yxorbit[i] * this.Yxorbit[i] + this.Yyorbit[i] * this.Yyorbit[i];
-        var dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
+        dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
+        */
 
-
+        
     }
     return dist;
 
@@ -507,7 +564,7 @@ MSet.prototype.fdistance = function (cx, cy) {
 MSet.prototype.refCopy = function (m) {
 
     this.maxRefIter = m.maxRefIter; 
-    this.ApproxIndexStart = m.ApproxIndexStart; 
+    this.ApproxIndexStart = m.ApproxIndexStart;
     this.xRef.e = m.xRef.e;
     this.xRef.s = m.xRef.s;
     this.xRef.v = m.xRef.v;
