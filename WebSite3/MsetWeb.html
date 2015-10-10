@@ -7,6 +7,7 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="Bignum.js"></script>
     <script src="Mset.js"></script>
+    <script src="ImageBit.js"></script>
 
     <link rel="stylesheet" type="text/css" href="MsetStyles.css"/>
     
@@ -23,6 +24,8 @@
         var mousePosx, mousePosy;
         var imgDt;
         var worker = new Array();
+        //var refSet = new MSet();
+
 
 
         function relMouseCoords(e) {
@@ -69,9 +72,9 @@
             $("#out2").val(1.5);  // start with 1.2
             $("#out3").val(1);    // start with 1
 
-            $("#out1").val("-0.543125818776033354");
-            $("#out2").val("0.6164775955475614916");
-            $("#out3").val("-0.543125818776031354");
+            $("#out1").val("-0.5431258187760327092");
+            $("#out2").val("0.6164775955475611892");
+            $("#out3").val("-0.5431258187760327083");
             $("#iterationMultiplier").val(0.3);
             $("#threshMult").val(1);
 
@@ -87,7 +90,8 @@
 
             canvas2.onmouseleave = function (e) {
                 ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
-             }
+            }
+
 
             /*******************************************************
             /* Redraws the sprite when the mouse moves
@@ -180,12 +184,6 @@
                 var xSpan = currX2.minus(currX1);
                 var ySpan = xSpan.times(canvas2.height).divint(canvas2.width);
 
-                //var currX1 = parseFloat(document.getElementById("out1").value);
-                //var currY1 = parseFloat(document.getElementById("out2").value);
-                //var currX2 = parseFloat(document.getElementById("out3").value);
-                //var xSpan = currX2 - currX1;
-                //var ySpan = xSpan * canvas2.height / canvas2.width;
-
 
                 if (relativeCoords.x != mousePosx || relativeCoords.y != mousePosy) {
                     var x1 = currX1.minus(xSpan.times(relativeCoords.x - mousePosx).divint(canvas2.width));
@@ -197,10 +195,13 @@
                     ctx1.putImageData(imgDt, relativeCoords.x - mousePosx, relativeCoords.y - mousePosy);
                 }
 
-                else {
-                    var x1 = currX1.plus(xSpan.times(parseInt(relativeCoords.x - mouseWindowWidth / 2)).divint(canvas2.width));
+                else { // this is a click Zoom
+
+                    var sp = xSpan.times(parseInt(relativeCoords.x - mouseWindowWidth / 2)).divint(canvas2.width);
+                    var spx = xSpan.divint(5);
+                    var x1 = currX1.plus(sp);
+                    var x2 = x1.plus(spx);
                     var y1 = currY1.minus(ySpan.times(parseInt(relativeCoords.y - mouseWindowHeight / 2)).divint(canvas2.height));
-                    var x2 = currX1.plus(xSpan.times(parseInt(relativeCoords.x + mouseWindowWidth / 2)).divint(canvas2.width));
 
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                 }
@@ -214,7 +215,10 @@
 
             } //onmouseup
 
+
+
         }   // init
+
 
         //*******************************************************
         // Re-runs the same picture allowing user to modify some settings
@@ -327,19 +331,26 @@
             var threshMult = parseFloat($("#threshMult").val());
             var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
             $('#out6').val(threshold);
+             
+            var canvasData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+            var imgBit = new ImageBit(canvasData, x1, y1, x2);
 
             
+
+            var refSet = new MSet(maxiter, threshold, col1, col2, col3);
             var refx = new Big("-0.543125818776033354");
             var refy = new Big("0.6164775955475614916");
-            var refSet = new MSet(maxiter, threshold, col1, col2, col3);
+            //var ref = refSet.getRefPoint(imgBit);
             refSet.xyInc = f / canvas1.width; // this is normally calculated as part of the paint function, but here we pass it because we dont paint the ref point. 
             refSet.refdistance(refx, refy);
 
-            var numworkers = 1;
+            var numworkers = 5;
 
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
 
-
+            var workerCount = 0;
+            var totalWorkers = numworkers * numworkers;
+            
             for (var i = 0; i < numworkers; i++) {
 
                 var subwidth = Math.floor(canvas1.width / numworkers);
@@ -403,9 +414,11 @@
             //defines the call back function, which determinse what should happen when the workers finish. In this case, paint the image.
             function workerCallback(e) {
                 ctx1.putImageData(e.data.imgData, Math.floor(e.data.px1), Math.floor(e.data.py1));
+                workerCount++;
             }
 
         } //paintThreadSet
+
 
     </script>
 
@@ -452,17 +465,24 @@
             <input id="threshMult" style="width:50px; " value="1" >
             <button onclick="recalculate()" >Recalculate</button>
             </div>  
-              
-            <label >X1</label>
-            <input id="out1"; style="width:200px"  >
-            <label >Y1</label>
-            <input id="out2"; style="width:200px"  >
-            <label >X2</label>
-            <input id="out3"; style="width:200px"  >
+            
+            <div>  
+                <label >X1</label>
+                <input id="out1"; style="width:400px"  >
+            </div>
+            
+            <div>
+                <label>X2</label>
+                <input id="out3" ; style="width:400px">
+            </div>
+            <div>
+                <label>Y1</label>
+                <input id="out2" ; style="width:400px">
+            </div>
 
-       
-                    
-        </div>
+
+
+            </div>
 
 
        

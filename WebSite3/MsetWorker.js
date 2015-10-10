@@ -36,13 +36,14 @@ self.onmessage = function (e) {
 
 
 
-    var imgbit = new ImageBit(imgData, subwidth, subheight, subx1, suby1, subx2);
+    var imgbit = new ImageBit(imgData, subx1, suby1, subx2);
 
     //call the long computation
     var m = new MSet(maxiter, threshold, col1, col2, col3);
     m.refCopy(e.data.refSet); // copies the values of the Reference Set
     m.paint(imgbit);
 
+  
     //formats the data to be returned back to the UI thread
     var workerMessage = {
         imgData: imgbit.imgData,

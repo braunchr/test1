@@ -42,10 +42,10 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.YRyorbit = new Array(MaxArray); // the approximation is reliable. 
     this.YAxorbit = new Array(MaxArray);	// provided the term in C is smaller than the term in B,
     this.YAyorbit = new Array(MaxArray); // the approximation is reliable. 
+     
 
-    
     hexToRGB = function (hex) {
-        var h = parseInt(hex.substr(1, 7),16); //Remove #. Parse HEX color to a 16 bit integer.
+        var h = parseInt(hex.substr(1, 7), 16); //Remove #. Parse HEX color to a 16 bit integer.
         var r = (h >> 16) & 0xFF;
         var g = (h >> 8) & 0xFF;
         var b = h & 0xFF;
@@ -57,7 +57,31 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.col3 = hexToRGB(color3);
 
 
+    //this.col1;
+    //this.col2;
+    //this.col3;
+
+    }
+
+
+MSet.prototype.setColor = function (color1, color2, color3) {
+
+    hexToRGB = function (hex) {
+        var h = parseInt(hex.substr(1, 7), 16); //Remove #. Parse HEX color to a 16 bit integer.
+        var r = (h >> 16) & 0xFF;
+        var g = (h >> 8) & 0xFF;
+        var b = h & 0xFF;
+        return [r, g, b];
+    }
+
+    this.col1 = hexToRGB(color1);
+    this.col2 = hexToRGB(color2);
+    this.col3 = hexToRGB(color3);
+
+
+
 }
+  
 
 MSet.prototype.colorise = function (dist, i, j, xyInc, imgbit) {
 
@@ -102,49 +126,16 @@ MSet.prototype.paint = function (imgbit) {
 
     var xRefOffset = -this.xRef.minus(cx).toFloat()
     var yRefOffset = this.yRef.minus(cy).toFloat();
-    
 
     for (var j = 0; j < imgbit.height; j++) {
         for (var i = 0; i < imgbit.width; i++) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
-
-                
-                dist = 0.25 * this.deltadistance(xRefOffset +i*xyInc, yRefOffset +j*xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.plus(imgbit.xyIncrement.times(j)));
+                dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset + j * xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.plus(imgbit.xyIncrement.times(j)));
                 this.colorise(dist, i , j, xyInc, imgbit);
-                /*
-                //dist2 = 0.25 * this.refdistance(cx.plus(imgbit.xyIncrement), cy);
-                               
-                dist = 0.25 * this.deltadistance(2 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(2)), cy);
-                this.colorise(dist, i + 2, j, xyInc, imgbit);
-
-                dist = 0.25 * this.deltadistance(3 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(3)), cy);
-                this.colorise(dist, i + 3, j, xyInc, imgbit);
-
-                dist = 0.25 * this.deltadistance(4 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(4)), cy);
-                this.colorise(dist, i + 4, j, xyInc, imgbit);
-
-                
-                dist = 0.25 * this.deltadistance(5 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(5)), cy);
-                this.colorise(dist, i + 5, j, xyInc, imgbit);
-
-                dist = 0.25 * this.deltadistance(6 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(6)), cy);
-                this.colorise(dist, i + 6, j, xyInc, imgbit);
-
-                dist = 0.25 * this.deltadistance(7 * xyInc, 0, cx.plus(imgbit.xyIncrement.times(7)), cy);
-                this.colorise(dist, i + 7, j, xyInc, imgbit);
-
-               
-                */
-
             }
-
-            //cx = cx.plus(imgbit.xyIncrement); //increment the x axis by one pixel
         }
-        //cx = imgbit.x1; // reset the x axis for the next line
-        //cy = cy.minus(imgbit.xyIncrement);  // increment the y axis by one pixel
     }
-
     return imgbit;
 }
   
@@ -225,13 +216,17 @@ MSet.prototype.refdistance = function (cx, cy) {
 
         if (computeTaylorSeries == true) { // calculate the coefficients of the ABC series recursively until they are no longer precise enough
 
+            // An+1 = 2*Zn*An + 1
+            // Bn+1 = 2*Zn*Bn An*An
+            // Cn+1 = 2*(Zn*Cn + *Bn*An)
+
             this.Axorbit[iter] = 2 * (Ax * Xx - Ay * Xy) + 1;
             this.Ayorbit[iter] = 2 * (Ax * Xy + Ay * Xx);
 
             this.Bxorbit[iter] = 2 * (Bx * Xx - By * Xy) + Ax * Ax - Ay * Ay;
-            this.Byorbit[iter] = 2 * (Bx * Xy + By * Xx) + 2 * Ax * Ay;
+            this.Byorbit[iter] = 2 * (Bx * Xy + By * Xx + Ax * Ay);
 
-            this.Cxorbit[iter] = 2 * (Cx * Xx - Cy * Xy) + 2 * (Ax * Bx - Ay * By);
+            this.Cxorbit[iter] = 2 * (Cx * Xx - Cy * Xy + Ax * Bx - Ay * By);
             this.Cyorbit[iter] = 2 * (Cx * Xy + Cy * Xx + Ax * By + Bx * Ay);
 
             // A'n+1 = 2(Z'n*An + Zn*A'n)
@@ -249,11 +244,13 @@ MSet.prototype.refdistance = function (cx, cy) {
 
             this.ApproxIndexStart++ ;
 
-            if ((Math.abs(this.xyInc * this.Cxorbit[iter] * 100000) > Math.abs(this.Bxorbit[iter]))) {  // check if C is too large (0.1% of B term)
+            // check if there is an overload on the computation of the Taylor Series (eg C is > 0.01% of B)
+            if ((Math.abs(this.Cxorbit[iter] * this.xyInc * 1000) > Math.abs(this.Bxorbit[iter]))) {   
                 computeTaylorSeries = false;
             }
 
-            if ((Math.abs(this.xyInc * this.Cpxorbit[iter] * 100000) > Math.abs(this.Bpxorbit[iter]))) {  // check if C' is too large (0.1% of B term)
+            // Or an overload on the computation of the derivatives series (eg Cc is > 0.01% of Bc)
+            if ((Math.abs(this.Cpxorbit[iter] * this.xyInc * 1000) > Math.abs(this.Bpxorbit[iter]))) {
                 computeTaylorSeries = false;
             }
 
@@ -266,46 +263,12 @@ MSet.prototype.refdistance = function (cx, cy) {
     this.maxRefIter = iter; // this stores the bailout index of the refernce point. 
 
     if (this.ApproxIndexStart == 0) this.ApproxIndexStart = iter;
-    if (this.ApproxIndexStartp == 0) this.ApproxIndexStartp = iter;
-
+   
     if (iter < this.maxiter && flag == false) { //we have escaped before reaching the max iteration, estimate the distance
         dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
     }
 
     return dist;
-
-
-    /*  
-  if (iter < this.maxiter) { //we have escaped before reaching the max iteration, estimate the distance
-      xdc = ydc = i = fxi = fyi = fx2 = fy2 =0;
-      flag = false;
-      t = 0;
-      modulus = 0;
-
-      while ((i < iter) && (flag == false) && (modulus < 10000)) {
-          
-          t = 2 * (this.Xxorbit[i] * xdc - this.Xyorbit[i] * ydc) + 1;
-          ydc = 2 * (this.Xyorbit[i] * xdc + this.Xxorbit[i] * ydc);
-          xdc = t;
-
-          
-          flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
-          
-          i++;
-
-          var tst = xdc - this.Xpxorbit[i];
-
-
-          modulus = this.Xxorbit[i] * this.Xxorbit[i] + this.Xyorbit[i] * this.Xyorbit[i];
-      }
-
-      if (flag == false) {
-          dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
-      }
-      
-
-    return dist;
-    */
 
 }
 
@@ -322,26 +285,16 @@ MSet.prototype.refdistance = function (cx, cy) {
 //***************************************************************************************
 MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
 
-    var x, y, t, tx,ty, dx0, dy0, dx, dy, d2c, d2y, d3x, d3y;  // the powers square and cube of delta
+    var x, y, temp, tempx,tempy, dx0, dy0, dx, dy, d2c, d2y, d3x, d3y;  // the powers square and cube of delta
     var term1x, term1y, term2x, term2y, term3x, term3y; // the three terms of Delta N = AnDn + BnDn^2 + CnDn^3
     var iter;
     var dpx, dpy; 
 
-    var xr = new Big(0);
-    var yr = new Big(0);
-    var x2 = new Big(0);
-    var y2 = new Big(0);
-    var temp = new Big(0);
     var dist = 0;
     var modulus = 0;
 
-    this.Xxorbit[0] = this.Xyorbit[0] = 0;
     this.Yxorbit[0] = this.Yyorbit[0] = 0;
-    this.Xpxorbit[0] = this.Xpyorbit[0] = 0;
     this.Ypxorbit[0] = this.Ypyorbit[0] = 0;
-    this.YAxorbit[0] = this.YAyorbit[0] = 0;
-    this.YRxorbit[0] = this.YRyorbit[0] = 0;
-
 
     x = 0;
     y = 0;
@@ -351,24 +304,27 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
     dpy = 0;
 
 
-    // Using the approximation
-    // Store the value of Delta0
+    // Store the value of Delta0, its square and its cube.  
+    // We will need these values in the calculations of the Taylor series (next) 
     dx0 = deltax;
     dy0 = deltay;
-
-    // Compute the square of Delta0
-    d2x0 = dx0 * dx0 - dy0 * dy0;
+    d2x0 = dx0 * dx0 - dy0 * dy0;// Compute the square of Delta0
     d2y0 = 2 * deltax * deltay;
-
-    // Compute the cube of Delta0
-    d3x0 = dx0 * d2x0 - dy0 * d2y0;
+    d3x0 = dx0 * d2x0 - dy0 * d2y0;// Compute the cube of Delta0
     d3y0 = dy0 * d2x0 + dx0 * d2y0;
 
-    iter = 0;
+    //Because of the Taylor Series approximation, we can start the iterations further than Zero
+    // we calculate the starting iteration of Delta (dx,dy) and DeltaPrime (dpx,dpy) further 
+    // Forumlas are Delta_n = An*d0 + Bn*d0^2 + Cn*d0^3 and the same with the derivatives A'B'C'
 
-    //THIS CODE HAS BEEN TESTED FOR THE APPROXIMATION
     iter = this.ApproxIndexStart;
 
+    //Compute the approximation, but start at the point where the C term is Delta0 times lower than the B term. 
+    while ((Math.abs(dx0 * this.Cxorbit[iter] * 10000) > Math.abs(this.Bxorbit[iter]))) {
+        iter--;
+        this.ApproxIndexStart--;
+    }
+    
     // calculate the starting poing for hte Taylor function using ABC    
     term1x = dx0 * this.Axorbit[iter] - dy0 * this.Ayorbit[iter];
     term1y = dx0 * this.Ayorbit[iter] + dy0 * this.Axorbit[iter];
@@ -389,55 +345,29 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
     dpx = term1x + term2x + term3x;
     dpy = term1y + term2y + term3y;
 
-    var xdc = 0;
-    var ydc = 0;
-
     while ((iter < this.maxRefIter) && ((modulus) < 10000)) {
 
-
-
+        //******************************************************************************************
         ///// PERTURBATION DELTA FORMULA - EXACT AND NOT APPROXIMATED - Dn+1 = 2*Zn*Dn + Dn*Dn + D0
-        //*******************************************************************************************
         // 
+        // exact formula (not used here) for the derivative is Z'(n+1)=2*Z(n)*Z'(n) + 1 can be reused for testing
+        //*******************************************************************************************
         tx = 2 * (this.Xxorbit[iter] * dx - this.Xyorbit[iter] * dy) + (dx * dx - dy * dy) + dx0;
         ty = 2 * (this.Xyorbit[iter] * dx + this.Xxorbit[iter] * dy) + 2 * dx * dy + dy0;
         
 
         ///// DERIVATIVE DELTA FORMULA - EXACT AND NOT APPROXIMATED - DZ'n+1 = 2(Z'n*Dn + ZnDZ'n + DZn*DZ'n)
         //*******************************************************************************************
-        // 
         t = 2 * (this.Xpxorbit[iter] * dx - this.Xpyorbit[iter] * dy + this.Xxorbit[iter] * dpx - this.Xyorbit[iter] * dpy + dx * dpx - dy * dpy);
         dpy = 2 * (this.Xpxorbit[iter] * dy + this.Xpyorbit[iter] * dx + this.Xxorbit[iter] * dpy + this.Xyorbit[iter] * dpx + dy * dpx + dx * dpy);
         dpx = t;
 
-
-
-        //t = 2 * ((new Big(this.Yxorbit[iter])).times(new Big(xdc)).minus(new Big(this.Yyorbit[iter]).times(new Big(ydc)))).toFloat() + 1;
-        //ydc = 2 * ((new Big(this.Yyorbit[iter])).times(new Big(xdc)).plus(new Big(this.Yxorbit[iter]).times(new Big(ydc)))).toFloat();
-        //xdc = t;
-        //t = 2 * (this.Yxorbit[iter] * xdc - this.Yyorbit[iter] * ydc) + 1;
-        //ydc = 2 * (this.Yyorbit[iter] * xdc + this.Yxorbit[iter] * ydc);
-        //xdc = t;
-
         dx = tx;
         dy = ty;
-
-
-        /*
-        //===Calculation of the ref point. again, using N, not N+1
-        temp = (x2.minus(y2).plus(cx));
-        yr = (xr.times(2).times(yr).plus(cy));
-        xr = temp;
-        x2 = xr.times(xr);
-        y2 = yr.times(yr);
-        */
 
         iter++;  // we now go to N+1
 
         // DERIVATIVE
-        a = this.Xpxorbit[iter] + dpx;
-        b = this.Xpyorbit[iter] + dpy;
-
         this.Ypxorbit[iter] = this.Xpxorbit[iter] + dpx;
         this.Ypyorbit[iter] = this.Xpyorbit[iter] + dpy;
 
@@ -448,65 +378,22 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         this.Yyorbit[iter] = y;
 
         modulus = x * x + y * y;
-        
-
-        /*
-        // then with the exact high precision Mandelbrot forumla
-        this.YRxorbit[iter] = xr.toFloat();
-        this.YRyorbit[iter] = yr.toFloat();
-        */
-    }
-
     
-
-
-    if (x * x + y * y > 10000) {
-        dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(a * a + b * b);
-
-        /*
-        //////// with the Refernce point
-        var xdc = ydc = 0;
-        var flag = false;
-        var t = 0;
-
-        var i = 0;
-        flag = false;
-        while ((i < iter ) && (flag == false)) {
-            t = 2 * (this.YRxorbit[i] * xdc - this.YRyorbit[i] * ydc) + 1;
-            ydc = 2 * (this.YRyorbit[i] * xdc + this.YRxorbit[i] * ydc);
-            xdc = t;
-            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
-            i++;
-        }
-        if (flag == false)
-            var modulus = this.YRxorbit[i] * this.YRxorbit[i] + this.YRyorbit[i] * this.YRyorbit[i];
-        distR = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
-        */
-
-
-
-        // With the Delta perturbation exact method
-        /*
-        xdc = ydc = 0;
-        flag = false;
-        t = 0;
-
-        i = 0;
-        flag = false;
-        while ((i < iter) && (flag == false)) {
-            t = 2 * (this.Yxorbit[i] * xdc - this.Yyorbit[i] * ydc) + 1;
-            ydc = 2 * (this.Yyorbit[i] * xdc + this.Yxorbit[i] * ydc);
-            xdc = t;
-            flag = (Math.max(Math.abs(xdc), Math.abs(ydc)) > 1e300);
-            i++;
-        }
-        if (flag == false)
-            var modulus = this.Yxorbit[i] * this.Yxorbit[i] + this.Yyorbit[i] * this.Yyorbit[i];
-        dist = Math.log(modulus) * Math.sqrt(modulus) / Math.sqrt(xdc * xdc + ydc * ydc);
-        */
-
-        
     }
+
+    if (modulus > 10000) {
+        // forumula for distance estimate is Dist = log(modulus)* Sqrt(|Z|/|Z'|)
+        dist = Math.log(modulus) * Math.sqrt(modulus/(this.Ypxorbit[iter] * this.Ypxorbit[iter] + this.Ypyorbit[iter] * this.Ypyorbit[iter]));
+    }
+
+    if(dist==0){
+        var testDist = this.getDepth(cx, cy);
+        if (testDist > this.maxRefIter) {
+            testDist += 0;
+        }
+    }
+
+
     return dist;
 
 
@@ -554,6 +441,32 @@ MSet.prototype.fdistance = function (cx, cy) {
 
 
 
+//***************************************************************
+//         HIGH PRECISION DISTANCE ESTIMATOR FOR REFERENCE POINT
+//***************************************************************
+MSet.prototype.getDepth = function (cx, cy) {
+
+    var temp = new Big(0);
+    var y = new Big(0);
+    var x = new Big(0);
+    var y2 = new Big(0);
+    var x2 = new Big(0);
+    var iter = 0;
+    
+    while ((iter < this.maxiter) && (x2.toFloat() < 2)) {
+        temp = (x2.minus(y2).plus(cx));
+        y = (x.times(2).times(y).plus(cy));
+        x = temp;
+        x2 = x.times(x);
+        y2 = y.times(y);
+            
+        iter++; // We now go to N+1
+        
+    }
+
+    return iter;
+}
+
 
 
 //********************************************************************************
@@ -594,3 +507,35 @@ MSet.prototype.refCopy = function (m) {
     
 }
 
+
+
+//***************************************************************
+//         FIND A REFERENCE POINT IN AN IMAGE CONTEXT
+//***************************************************************
+MSet.prototype.getRefPoint = function (imgBit) {
+
+    var blackFound = 0;
+
+    for (var j = 0; j < imgBit.width; j++) {
+        for (var i = 0; i < imgBit.height; i++) {
+                    
+            var index = (j * imgBit.height + i) * 4;
+            if (imgBit.imgData.data[index] == 0 && imgBit.imgData.data[index + 1] == 0
+            && imgBit.imgData.data[index + 2] == 0 && imgBit.imgData.data[index + 3] == 255) {
+                blackFound++;
+                if (blackFound == 3) {
+                    var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i-1)));
+                    var cy = imgBit.y1.plus(imgBit.xyIncrement.times(new Big(j)));
+                    return { cx: cy };
+                }
+
+            }
+            else blackFound = 0;
+                
+        }
+        i = 0; // reset for the next line
+        blackFound = 0;
+    }
+
+    return null; 
+}

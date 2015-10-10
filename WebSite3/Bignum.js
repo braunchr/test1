@@ -257,8 +257,10 @@ Big.prototype.times = function (y, prec) {
         
         res.e = x.e;
        
-        for (var i = 0; i < x.v.length; i++)     // multiply every token by the integer. This works because base is less or equal to 7 and we have no overflow
-                 res.v[i] = x.v[i]*y; //use the bitwise operator to truncate 32 bits before adding it.    
+        for (var i = 0; i < x.v.length; i++) {   // multiply every token by the integer. This works because base is less or equal to 7 and we have no overflow
+            res.v[i] = x.v[i] * y; //perform the multiplication.  
+        }
+
         return res;
     }
 }

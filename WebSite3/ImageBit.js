@@ -1,10 +1,10 @@
 ﻿
 // constructor
-function ImageBit (imgData, wi, he, x1, y1, x2) {
+function ImageBit (imgData, x1, y1, x2) {
 
     this.imgData = imgData;
-    this.width = wi;
-    this.height = he;
+    this.width = imgData.width;
+    this.height = imgData.height;
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
