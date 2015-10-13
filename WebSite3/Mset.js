@@ -3,8 +3,7 @@
 //******************************************************************
 //                        MSET - CONSTRUCTOR
 //*******************************************************************
-function MSet(maxiter, threshold, color1, color2, color3) 
-{
+function MSet(maxiter, threshold, color1, color2, color3) {
     this.maxiter = maxiter; // maximum number of iterations
     this.maxRefIter = 0; // stores the maximum number of iterations before the reference point escapes: The bailout index
     this.ApproxIndexStart = 0; // Stores the index below which the ABC series approximation is valid. Above this the delta calc must be used
@@ -42,26 +41,13 @@ function MSet(maxiter, threshold, color1, color2, color3)
     this.YRyorbit = new Array(MaxArray); // the approximation is reliable. 
     this.YAxorbit = new Array(MaxArray);	// provided the term in C is smaller than the term in B,
     this.YAyorbit = new Array(MaxArray); // the approximation is reliable. 
-     
 
-    hexToRGB = function (hex) {
-        var h = parseInt(hex.substr(1, 7), 16); //Remove #. Parse HEX color to a 16 bit integer.
-        var r = (h >> 16) & 0xFF;
-        var g = (h >> 8) & 0xFF;
-        var b = h & 0xFF;
-        return [r, g, b];
-    }
-
-    this.col1 = hexToRGB(color1);
-    this.col2 = hexToRGB(color2);
-    this.col3 = hexToRGB(color3);
+    this.col1;
+    this.col2;
+    this.col3;
 
 
-    //this.col1;
-    //this.col2;
-    //this.col3;
-
-    }
+}
 
 
 MSet.prototype.setColor = function (color1, color2, color3) {
@@ -77,9 +63,6 @@ MSet.prototype.setColor = function (color1, color2, color3) {
     this.col1 = hexToRGB(color1);
     this.col2 = hexToRGB(color2);
     this.col3 = hexToRGB(color3);
-
-
-
 }
   
 
@@ -476,6 +459,12 @@ MSet.prototype.getDepth = function (cx, cy) {
 //********************************************************************************
 MSet.prototype.refCopy = function (m) {
 
+    this.maxiter = m.maxiter;
+    this.threshold = m.threshold;
+    this.col1 = m.col1;
+    this.col2 = m.col2;
+    this.col3 = m.col3;
+
     this.maxRefIter = m.maxRefIter; 
     this.ApproxIndexStart = m.ApproxIndexStart;
     this.xRef.e = m.xRef.e;
@@ -503,6 +492,8 @@ MSet.prototype.refCopy = function (m) {
     this.Bpyorbit = m.Bpyorbit;
     this.Cpxorbit = m.Cpxorbit;
     this.Cpyorbit = m.Cpyorbit;
+
+
 
     
 }

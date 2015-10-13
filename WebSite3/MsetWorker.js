@@ -39,7 +39,7 @@ self.onmessage = function (e) {
     var imgbit = new ImageBit(imgData, subx1, suby1, subx2);
 
     //call the long computation
-    var m = new MSet(maxiter, threshold, col1, col2, col3);
+    var m = new MSet();
     m.refCopy(e.data.refSet); // copies the values of the Reference Set
     m.paint(imgbit);
 

@@ -4,7 +4,7 @@
 <head>
     <title>this is a test</title>
     <meta charset="UTF-8">
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="jquery-1.11.3.js"></script>
     <script src="Bignum.js"></script>
     <script src="Mset.js"></script>
     <script src="ImageBit.js"></script>
@@ -24,7 +24,7 @@
         var mousePosx, mousePosy;
         var imgDt;
         var worker = new Array();
-        //var refSet = new MSet();
+        var refSet = new MSet();
 
 
 
@@ -337,7 +337,10 @@
 
             
 
-            var refSet = new MSet(maxiter, threshold, col1, col2, col3);
+            refSet.setColor(col1, col2, col3);
+            refSet.maxiter = maxiter;
+            refSet.threshold = threshold;
+
             var refx = new Big("-0.543125818776033354");
             var refy = new Big("0.6164775955475614916");
             //var ref = refSet.getRefPoint(imgBit);
