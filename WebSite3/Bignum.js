@@ -2,7 +2,7 @@
 
 var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION = 30;  // maximum number of tokens
+var PRECISION =4;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
@@ -37,9 +37,18 @@ function Big(n) {
 
     n = n.replace(/\s+/g, ''); // remove all the spaces
 
-    this.s = (n.charAt(0) == '-') ? (n = n.slice(1), -1) : 1; //store and strip the sign
+    //this.s = (n.charAt(0) == '-' || n.charAt(0) == '+') ? (n = n.slice(1), -1) : 1; //store and strip the sign
 
+    this.s = 1;  // by default, the sign is positive
 
+    if (n.charAt(0) == '+') {  //Ignore the sign "+" if there was one
+        n = n.slice(1),-1;
+    }
+
+    if (n.charAt(0) == '-') {  //If there was a negative sign, strip it and Change the sign of the result. 
+        n = n.slice(1),-1;
+        this.s = -1;
+    }
 
     if ((dp = n.indexOf('.')) >= 0) { // Decimal point?
         n = n.replace('.', '');
@@ -108,18 +117,40 @@ function Big(n) {
 }
 
 //**************************************************************************************
-//                                  F O R M A T 
+//                                  T O    F L O  A  T
+//
+// Converts the big number in a float number with a given number of tokens
+//**************************************************************************************
 
+Big.prototype.toFloat = function() { //n is optionally the number of tokens to parse
+
+    var res = 0;
+    var n = Math.min(this.v.length, 1 + Math.floor(17 / bp)); //n is however many tokens fit in a floating number
+
+    for (var i = 1 ; i <= n; i++) {
+        res += this.v[this.v.length - i] * Math.pow(base, this.e - i + 1);
+    }
+
+    res = res * this.s;
+
+    return res;
+}
+
+//**************************************************************************************
+//                                  F O R M A T 
 // this method simply formats a bignum in a decimal string so that it can be displayed
 //**************************************************************************************
 
-Big.prototype.format = function () {
+Big.prototype.toString = function (numTokens) {  // n is the number of tokens to display 
 
+    
     // start with the sign
     var st = (this.s == 1) ? '+' : '-';
     var v = this.v;
     var e = this.e.toString();
     var tok1 = v[v.length - 1].toString();
+    var maxLength = 0;
+    if (!isNaN(numTokens)) maxLength = v.length - numTokens;  // if a precision was passed, then store it. 
 
 
     //add the first token and the decimal point
@@ -127,7 +158,7 @@ Big.prototype.format = function () {
     st = st.concat(tok1.slice(0, 1), '.', tok1.slice(1));
 
 
-    for (var i = v.length - 2; i >= 0; i--) {
+    for (var i = v.length - 2; i >= 0 && i >= maxLength ; i--) {
 
         for (var pad = bp; v[i].toString().length < pad; pad--) { st = st.concat('0'); } //pad with zeros
         st = st.concat(v[i].toString());
@@ -141,56 +172,93 @@ Big.prototype.format = function () {
     return (st);
 }
 
+
 //**************************************************************************************
 //                               M U L T I P L I C A T I O N 
 //**************************************************************************************
+// this function multiplies a big number (this) by another number (y) big number or integer.
 
 Big.prototype.times = function (y, prec) {
-
     var res = new Big(); // to store the result
+    var x = this; 
     if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
 
     if (y instanceof Big) {
+
+        // check if x is zero
+        if (x.v[x.v.length - 1] == 0) {
+            res.s = 1;
+            res.e = 0;
+            res.v[0] = 0;
+            return res;
+        }
+
+        // check if y is zero
+        if (y.v[y.v.length - 1] == 0) {
+            res.s = 1;
+            res.e = 0;
+            res.v[0] = 0;
+            return res;
+        }
+
         // The sign of the result is -1 if the factor signs are the same, -1 otherwise. 
-        res.s = (this.s == y.s) ? 1 : -1;
+        res.s = (x.s == y.s) ? 1 : -1;
 
         // initialises the array to store the result. We have to initialise it to Zero because we add to it in the body. 
-        for (var ind = 0 ; ind < this.v.length + y.v.length; ind++)
+        for (var ind = 0 ; ind < x.v.length + y.v.length; ind++)
             res.v[ind] = 0;
 
-        for (var i = 0; i < this.v.length; i++)     // this is the main loop. it is o(N2) in length because it's a double loop. 
+        for (var i = 0; i < x.v.length; i++)     // this is the main loop. it is o(N2) in length because it's a double loop. 
             for (var j = 0; j < y.v.length; j++) {
-                var t = this.v[i] * y.v[j] + res.v[i + j];  // store the result of the multiplication and add any previously held carry. 
+                var t = x.v[i] * y.v[j] + res.v[i + j];  // store the result of the multiplication and add any previously held carry. 
                 res.v[i + j] = t % base;  //remainder
                 if (t >= base) {// if we have a carry, add it to the next token    
                     res.v[i + j + 1] += ~~(t / base); //use the bitwise operator to truncate 32 bits before adding it.    
                 }
             }
-
-        if (res.v[i + j - 1] == 0) { // if the last element is zero - this is the most significant token
+        
+        var significantDigit = res.v[i+j-1];
+        if (significantDigit == 0) { // if the last element is zero - this is the most significant token
             res.v.pop();  // remove it because we have no carry and no need for leading zeros]
-            res.e = this.e + y.e;
+            res.e = x.e + y.e;
         }
         else {
-            res.e = this.e + y.e + 1;
+            res.e = x.e + y.e + 1;
+        }
+      
+        if (significantDigit >= base) {  // this can happen because we allow for integer multiplication, so sometimes the last digit is larger than base - in this case, shift again
+            res.v[i + j - 1] = significantDigit % base;
+            res.v[i + j] = ~~(significantDigit / base);
+            (res.e)++;
         }
 
-
-        //Round for precision. Setting the length property truncates the array.
-        if (res.v.length > PRECISION) res.v.length = PRECISION;
-
-        //Remove trailing zeros
-        while (res.v[0] == 0 && res.v.length > 1)
+        //Remove trailing zeros and rounds for precision by truncating from the least significant digit
+        while ((res.v[0] == 0 && res.v.length > 1) || (res.v.length > PRECISION))
             res.v.shift();
 
         return res;
 
-    } else {  // if y was passsed as a number
-        res.s = (y >= 0) ? this.s : -this.s;
-        res.e = this.e;
+    } else {  // if y was passsed as a number which we assume is an integer
+
+        if (y == 0) {
+            res.s = 1;
+            res.e = 0;
+            res.v[0] = 0;
+            return res;
+        }
+
+        if (y < 0) {  // deal with the sign and ensure that y is always positive
+            res.s = -x.s;
+            y = -y;
+        }
+        else {
+            res.s = x.s
+        }
+        
+        res.e = x.e;
        
-        for (var i = 0; i < this.v.length; i++)     // multiply every token by the integer. This works because base is less or equal to 7 and we have no overflow
-                 res.v[i] = this.v[i]*y; //use the bitwise operator to truncate 32 bits before adding it.    
+        for (var i = 0; i < x.v.length; i++)     // multiply every token by the integer. This works because base is less or equal to 7 and we have no overflow
+                 res.v[i] = x.v[i]*y; //use the bitwise operator to truncate 32 bits before adding it.    
         return res;
     }
 }
@@ -204,16 +272,18 @@ Big.prototype.times = function (y, prec) {
 Big.prototype.divint = function (y, prec) {
 
     var res = new Big(); // to store the result
+    var x = this;
+
     if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
 
     // The sign of the result is the same unless y is negative. 
-    res.s = (y > 0) ? this.s : -this.s;
+    res.s = (y > 0) ? x.s : -x.s;
 
     var q = 0;
-    var i = this.v.length - 1;
-    var r = this.v[i];
+    var i = x.v.length - 1;
+    var r = x.v[i];
     var rl = 0;   // length of the result
-    res.e = this.e;
+    res.e = x.e;
 
     while ((rl < PRECISION) && ((i >= 0) || (r != 0))) {
         i--;
@@ -224,7 +294,7 @@ Big.prototype.divint = function (y, prec) {
             res.e -= 1;  // decrement the exponent
             rl--;  // make sure you dont count the zero as a significant digit in the comparison with PRECISION
         }
-        r = base * (r % y) + (isNaN(this.v[i]) ? 0 : this.v[i])  // this is the new number to divide in the next iteration
+        r = base * (r % y) + (isNaN(x.v[i]) ? 0 : x.v[i])  // this is the new number to divide in the next iteration
     }
 
     return res;
@@ -239,19 +309,25 @@ Big.prototype.plus = function (y, prec) {
     var res = new Big();
     var x = this;
 
+    // check if x is zero
     if (x.v[x.v.length - 1] == 0) {
-        res = y;
+        res.s = y.s;
+        res.e = y.e;
+        res.v = y.v.slice(0); // clones the array
         return res;
     }
 
+    // check if y is zero
     if (y.v[y.v.length - 1] == 0) {
-        res = x;
+        res.s = x.s;
+        res.e = x.e;
+        res.v = x.v.slice(0);  // clones the array
         return res;
     }
 
 
     if (x.s != y.s) { // if the addition is between 2 numbers with different signs, it is a subtraction
-        if (x.s = -1) { 
+        if (x.s == -1) { 
             x.s = -x.s; // change the sign of x
             res = y.minus(x, prec);  //perform a subtraction instead of an addition
             x.s = -x.s; // put the sign of x back to its original state
@@ -334,6 +410,23 @@ Big.prototype.minus = function (y, prec) {
     var res = new Big();
     var x = this;
 
+    // check if y is zero
+    if (y.v[y.v.length - 1] == 0) {
+        res.s = x.s;
+        res.e = x.e;
+        res.v = x.v.slice(0); // clones the array
+        return res;
+    }
+
+    // check if x is zero
+    if (x.v[x.v.length - 1] == 0) {
+        res.s = -y.s;
+        res.e = y.e;
+        res.v = y.v.slice(0); // clones the array
+        return res;
+    }
+
+
     if (x.s != y.s) { // if the subtraction is between 2 numbers with different signs, it is an addition
         y.s = -y.s;  // swap the sign of y
         res = x.plus(y, prec);  //perform an addition instead of a subtraction
@@ -349,24 +442,38 @@ Big.prototype.minus = function (y, prec) {
 
     if (!isNaN(prec)) PRECISION = prec;  // if a prec was passed, set the precision.
 
-    if (x.compare(y) > 0) {  // first ensure that x is always bigger than y in absolute value 
-        res.s = x.s;  // the sign of the result is the sign of the largest exponent number  (subject to a carry which we will test later) 
-        res.e = x.e; // the exponent of the result is the same as that of the largest number  (subject to a carry which we will test later) 
+    if (x.compare(y) > 0 ) { // first ensure that x is always bigger than y in absolute value 
+        if(x.s==1){ // for example 7-4
+            res.s = 1;  // the sign of the result is the sign of the largest exponent number  (subject to a carry which we will test later) 
+            res.e = x.e; // the exponent of the result is the same as that of the largest number  (subject to a carry which we will test later) 
+        }
+        else { // for example (-4) - (-7) swap x and y
+            eo = -eo;
+            res.s = 1;
+            res.e = y.e;
+            x = y;
+            y = this;
+        }
     }
-    else { // otherwise swap x and y
-        x = y;
-        y = this;
-        eo = -eo;
-        res.s = -y.s
-        res.e = y.e;
+    else {
+        if (x.s == -1) { // for example (-7) - (-4)
+            res.s = -1;  // the sign of the result is the sign of the largest exponent number  (subject to a carry which we will test later) 
+            res.e = x.e; // the exponent of the result is the same as that of the largest number  (subject to a carry which we will test later) 
+        }
+        else { // for example 4-7  swap x and y
+            eo = -eo;
+            res.s = -1;
+            res.e = y.e;
+            x = y;
+            y = this;
+        }
     }
-
-
+    
     reslen = Math.max(x.v.length, y.v.length + eo); // stores the assumed length of the result. It is the length of the largest number
     xo = x.v.length - x.e - 1;  // the x offset represents the number of digits after the decimal points of x . Will be needed to align
     yo = y.v.length - y.e - 1;  // the y offset represents the number of digits after the decimal points of y . Will be needed to align
 
-    // check if the distance between the numbers is beyond the precision, then the addition and/or the subtraction does not need to be done as one number dwarfs the other. 
+    // check if the distance between the numbers is beyond the precision+1 to accomodate for rounding, then the addition and/or the subtraction does not need to be done as one number dwarfs the other. 
     // simply return x after copying it into res
     if (Math.abs(xo-yo)>PRECISION) {
         for (var i = 0; i < x.v.length; i++) res.v[i] = x.v[i];
@@ -384,6 +491,7 @@ Big.prototype.minus = function (y, prec) {
     // if the lentgh of the result is greater than the required precision, then 
     // truncate to the precision. for example 10^3 + 10^-7
     // this will be done by starting the subtraction of x and y at the Starting Offset (SO).
+
     (reslen > PRECISION) ? so = reslen - PRECISION : so = 0;
 
     for (var i = so; i < reslen; i++) { //loop for the main addition start at so
