@@ -2,7 +2,7 @@
 
 var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION =4;  // maximum number of tokens
+var PRECISION =5;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
@@ -31,9 +31,16 @@ function Big(n) {
     var dpa = new Array();      //Array to store the decimal point part 
 
 
-    if (n == null) return;
-    if (!isNaN(n)) n = n.toString();
+    if (n == null) return;      // if no argument was passed,return a Big of value 0
 
+    if (!isNaN(n)) n = n.toString();   // if a number was passed, transform it in a string 
+
+    if (n instanceof Object || n instanceof Big){ // if we want to clone. testing for objects because workers do not preserve the type
+        this.e = n.e;
+        this.v = n.v;
+        this.s = n.s;
+        return;
+    }
 
     n = n.replace(/\s+/g, ''); // remove all the spaces
 
@@ -594,4 +601,14 @@ Big.prototype.compare = function (y) {
 
 
 
+//**************************************************************************************
+//                                  C L O N E
+//**************************************************************************************
+// this function returns 1 if x is larger than y, -1 if x is smaller than y and 0 if x equals y
+//
+Big.prototype.clone = function (y) {
+
+    var res = new Big(y);
+
+}
 

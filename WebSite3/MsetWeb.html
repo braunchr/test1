@@ -25,9 +25,7 @@
         var imgDt;
         var worker = new Array();
         var refSet = new MSet();
-
-
-
+      
         function relMouseCoords(e) {
 
             var totalOffsetX = 0;
@@ -72,11 +70,30 @@
             $("#out2").val(1.5);  // start with 1.2
             $("#out3").val(1);    // start with 1
 
-            $("#out1").val("-0.5431258187760327092");
+            $("#out1").val("-0.5431258187760327091955");
             $("#out2").val("0.6164775955475611892");
             $("#out3").val("-0.5431258187760327083");
+
             $("#iterationMultiplier").val(0.3);
             $("#threshMult").val(1);
+
+
+            var maxMult = $("#iterationMultiplier").val();
+            var x1 = new Big($("#out1").val());
+            var y1 = new Big($("#out2").val());
+            var x2 = new Big($("#out3").val());
+            var maxiter = Math.floor(maxMult * Math.max(100, Math.abs(30 * Math.log(x2.minus(x1).toFloat()))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
+            refSet.maxiter = maxiter;
+            $('#out5').val(maxiter);
+
+            var threshMult = parseFloat($("#threshMult").val());
+            var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
+            refSet.threshold = threshold;
+            $('#out6').val(threshold);
+
+            refSet.setRefPoint(null);
+            refSet.xyInc = x2.minus(x1).toFloat() / canvas1.width;
+            refSet.setRefDistance();
 
             ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
 
@@ -181,6 +198,10 @@
                 var currX1 = new Big($("#out1").val());
                 var currY1 = new Big($("#out2").val());
                 var currX2 = new Big($("#out3").val());
+                
+                var threshMult = parseFloat($("#threshMult").val());
+                var maxMult = parseFloat($("#iterationMultiplier").val());
+
                 var xSpan = currX2.minus(currX1);
                 var ySpan = xSpan.times(canvas2.height).divint(canvas2.width);
 
@@ -193,6 +214,7 @@
                     imgDt = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
                     ctx1.putImageData(imgDt, relativeCoords.x - mousePosx, relativeCoords.y - mousePosy);
+                    
                 }
 
                 else { // this is a click Zoom
@@ -202,8 +224,26 @@
                     var x1 = currX1.plus(sp);
                     var x2 = x1.plus(spx);
                     var y1 = currY1.minus(ySpan.times(parseInt(relativeCoords.y - mouseWindowHeight / 2)).divint(canvas2.height));
+                   
+                    //var f = x2.minus(x1).toFloat();
+                    var maxiter = Math.floor(maxMult * Math.max(100, Math.abs(30 * Math.log(x2.minus(x1).toFloat()))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
+                    refSet.maxiter = maxiter;
+                    $('#out5').val(maxiter);
 
+                    //var threshMult = parseFloat($("#threshMult").val());
+                    var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
+                    refSet.threshold = threshold;
+                    $('#out6').val(threshold);
+
+                    var canvasData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+                    var imgBit = new ImageBit(canvasData, currX1, currY1, currX2);
+                    refSet.setRefPoint(imgBit);
+                    refSet.setRefDistance();
+                
                     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                    
+
+
                 }
 
                 $("#out1").val(x1.toString());
@@ -275,7 +315,6 @@
         // Presets
         //******************************************************
 
-
         thicker = function () {
             $("#threshMult").val(0.12);
             ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
@@ -321,33 +360,38 @@
             var col1 = $("#color1").val();
             var col2 = $("#color2").val();
             var col3 = $("#color3").val();
-
-            var maxMult = parseFloat($("#iterationMultiplier").val());
-            var f = x2.minus(x1).toFloat();
-            var maxiter = Math.floor( maxMult*Math.max(100, Math.abs(30 * Math.log(f))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
-
-            $('#out5').val(maxiter);
-
-            var threshMult = parseFloat($("#threshMult").val());
-            var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
-            $('#out6').val(threshold);
-             
-            var canvasData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
-            var imgBit = new ImageBit(canvasData, x1, y1, x2);
-
-            
+            var threshold = $("#out6").val();
+            var maxiter = $("#out5").val();
 
             refSet.setColor(col1, col2, col3);
-            refSet.maxiter = maxiter;
-            refSet.threshold = threshold;
 
-            var refx = new Big("-0.543125818776033354");
-            var refy = new Big("0.6164775955475614916");
-            //var ref = refSet.getRefPoint(imgBit);
-            refSet.xyInc = f / canvas1.width; // this is normally calculated as part of the paint function, but here we pass it because we dont paint the ref point. 
-            refSet.refdistance(refx, refy);
+            //var maxMult = parseFloat($("#iterationMultiplier").val());
+            //var maxiter = Math.floor(maxMult * Math.max(100, Math.abs(30 * Math.log(x2.minus(x1).toFloat()))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
+            //$('#out5').val(maxiter);
 
-            var numworkers = 5;
+            //var threshMult = parseFloat($("#threshMult").val());
+            //var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
+            //$('#out6').val(threshold);
+
+
+
+             
+            //var canvasData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+            //var imgBit = new ImageBit(canvasData, x1, y1, x2);
+            //refSet.setColor(col1, col2, col3);
+            //refSet.maxiter = maxiter;
+            //refSet.threshold = threshold;
+
+
+            //refSet.xRef = new Big("-0.543125818776033354");
+            //refSet.yRef = new Big("0.6164775955475614916");
+            //refSet.setRefPoint(imgBit);
+            
+            //refSet.xyInc = f / canvas1.width; // this is normally calculated as part of the paint function, but here we pass it because we dont paint the ref point. 
+            //refSet.setRefDistance();
+
+            
+            var numworkers = 1;
 
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
 
@@ -429,9 +473,9 @@
 
 
 <body onload="init();">
-    <div style="width: 500px;" >
+    <div style="width: 200px;" >
     
-        <div id="canvasContainer" style="position:relative; height:500px; " >
+        <div id="canvasContainer" style="position:relative; height:200px; " >
             <canvas id="canvas1" ></canvas>
             <canvas id="canvas2" ></canvas>
         </div>

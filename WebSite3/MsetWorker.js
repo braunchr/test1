@@ -18,22 +18,9 @@ self.onmessage = function (e) {
     var subheight = e.data.subheight;
     var precision = e.data.precision;
 
-    var subx1 = new Big(0);
-    var subx2 = new Big(0);
-    var suby1 = new Big(0);
-
-    subx1['v'] = e.data.subx1['v'];
-    subx1['e'] = e.data.subx1['e'];
-    subx1['s'] = e.data.subx1['s'];
-
-    subx2['v'] = e.data.subx2['v'];
-    subx2['e'] = e.data.subx2['e'];
-    subx2['s'] = e.data.subx2['s'];
-
-    suby1['v'] = e.data.suby1['v'];
-    suby1['e'] = e.data.suby1['e'];
-    suby1['s'] = e.data.suby1['s'];
-
+    var subx1 = new Big(e.data.subx1);
+    var subx2 = new Big(e.data.subx2);
+    var suby1 = new Big(e.data.suby1);
 
 
     var imgbit = new ImageBit(imgData, subx1, suby1, subx2);

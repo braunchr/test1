@@ -10,8 +10,8 @@ function MSet(maxiter, threshold, color1, color2, color3) {
     this.ApproxDerivsIndexStart = 0; // Stores the index below which the A'B'C' derivs series approximation is valid. 
     this.threshold = threshold;// used to color points close to the set
     this.xyInc = 0; // float representation of a pixel size
-    this.xRef = new Big(0);   //stores the coordinates of the Reference point
-    this.yRef = new Big(0); //stores the coordinates of the Reference point
+    this.xRef = null;   //stores the coordinates of the Reference point. Null to start with
+    this.yRef = null; //stores the coordinates of the Reference point. Null to start with
     var MaxArray = 10000;
     this.Xxorbit = new Array(MaxArray);// Stores the orbit of the Refence point X
     this.Xyorbit = new Array(MaxArray);// Declarations of arrays are made here for performance. 
@@ -100,8 +100,7 @@ MSet.prototype.paint = function (imgbit) {
     var xyInc = imgbit.xyIncrement.toFloat();
     this.xyInc = xyInc;
     var dist = 0;
-    var step = 8;
-
+   
     // calculate the iterations of the reference point
     //var cx = imgbit.x1;
     //var cy = imgbit.y1;
@@ -128,10 +127,12 @@ MSet.prototype.paint = function (imgbit) {
 // Iterates through f(z) = z^2 + C of coordinates cx and cy start at z0=0
 // If after a maximum nr of iterations, the function still converges, then C is in the set 
 //***************************************************************
-MSet.prototype.refdistance = function (cx, cy) {
+MSet.prototype.setRefDistance = function () {
     var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0, dist = 0;
 
     this.Xxorbit[0] = this.Xyorbit[0] = 0;
+    var cx = this.xRef;
+    var cy = this.yRef;
     this.Xpxorbit[0] = this.Xpyorbit[0] = 0;
     this.Axorbit[0] = 0; this.Ayorbit[0] = 0;
     this.Bxorbit[0] = this.Byorbit[0] = 0;
@@ -139,7 +140,11 @@ MSet.prototype.refdistance = function (cx, cy) {
     this.Apxorbit[0] = 0; this.Apyorbit[0] = 0;
     this.Bpxorbit[0] = this.Bpyorbit[0] = 0;
     this.Cpxorbit[0] = this.Cpyorbit[0] = 0;
+    this.ApproxIndexStart = 0;
 
+
+
+    /*
     //copy has to be deep bause you cant copy objects. 
     this.xRef.s = cx.s;
     this.xRef.e = cx.e;
@@ -147,6 +152,8 @@ MSet.prototype.refdistance = function (cx, cy) {
     this.yRef.s = cy.s;
     this.yRef.e = cy.e;
     this.yRef.v = cy.v;
+    */
+
 
     var computeTaylorSeries = true; //Records if we should continue to compute the ABC series. Typically when the third term is low.
     var computeDerivsTaylorSeries = true; //Records if we should continue to compute the ABC derivatives series. 
@@ -368,13 +375,17 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         // forumula for distance estimate is Dist = log(modulus)* Sqrt(|Z|/|Z'|)
         dist = Math.log(modulus) * Math.sqrt(modulus/(this.Ypxorbit[iter] * this.Ypxorbit[iter] + this.Ypyorbit[iter] * this.Ypyorbit[iter]));
     }
-
+    if (dist == 0) {
+        qq = 0;
+    }
+    /*
     if(dist==0){
         var testDist = this.getDepth(cx, cy);
         if (testDist > this.maxRefIter) {
             testDist += 0;
         }
     }
+    */
 
 
     return dist;
@@ -436,7 +447,7 @@ MSet.prototype.getDepth = function (cx, cy) {
     var x2 = new Big(0);
     var iter = 0;
     
-    while ((iter < this.maxiter) && (x2.toFloat() < 2)) {
+    while ((iter < this.maxiter) && (x2.toFloat() < 10000)) {
         temp = (x2.minus(y2).plus(cx));
         y = (x.times(2).times(y).plus(cy));
         x = temp;
@@ -467,12 +478,8 @@ MSet.prototype.refCopy = function (m) {
 
     this.maxRefIter = m.maxRefIter; 
     this.ApproxIndexStart = m.ApproxIndexStart;
-    this.xRef.e = m.xRef.e;
-    this.xRef.s = m.xRef.s;
-    this.xRef.v = m.xRef.v;
-    this.yRef.e = m.yRef.e;
-    this.yRef.v = m.yRef.v;
-    this.yRef.s = m.yRef.s;
+    this.xRef = new Big(m.xRef);
+    this.yRef = new Big(m.yRef);
 
     this.Xxorbit = m.Xxorbit
     this.Xyorbit = m.Xyorbit 
@@ -503,7 +510,18 @@ MSet.prototype.refCopy = function (m) {
 //***************************************************************
 //         FIND A REFERENCE POINT IN AN IMAGE CONTEXT
 //***************************************************************
-MSet.prototype.getRefPoint = function (imgBit) {
+MSet.prototype.setRefPoint = function (imgBit) {
+
+    if (this.xRef == null) {  // if it is the first time we draw the set then use any value
+        this.xRef = new Big("-0.543125818776033354");
+        this.yRef = new Big("0.6164775955475614916");
+        // this.xRef = new Big("-0.5431258187760327092");
+        // this.yRef = new Big("0.6164775955475611892");
+        //this.xRef = new Big("-0.5431258187760327091955");
+        //this.yRef = new Big("0.6164775955475611892");
+        return;
+    }
+
 
     var blackFound = 0;
 
@@ -517,7 +535,16 @@ MSet.prototype.getRefPoint = function (imgBit) {
                 if (blackFound == 3) {
                     var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i-1)));
                     var cy = imgBit.y1.plus(imgBit.xyIncrement.times(new Big(j)));
-                    return { cx: cy };
+                    var depth = this.getDepth(cx, cy);
+                    
+                    if (depth >200 ) {
+                        this.xRef = cx;
+                        this.yRef = cy;
+                        this.xyInc = ((imgBit.x2).minus(imgBit.x1)).toFloat() / canvas1.width;
+                        return;
+                    } else
+                        blackFound--;
+
                 }
 
             }
@@ -528,5 +555,6 @@ MSet.prototype.getRefPoint = function (imgBit) {
         blackFound = 0;
     }
 
-    return null; 
+    // if nothing was found, then return without setting the valuers
+    return;
 }
