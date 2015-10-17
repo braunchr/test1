@@ -70,11 +70,11 @@
             $("#out2").val(1.5);  // start with 1.2
             $("#out3").val(1);    // start with 1
 
-            $("#out1").val("-0.5431258187760327091955");
-            $("#out2").val("0.6164775955475611892");
-            $("#out3").val("-0.5431258187760327083");
+            $("#out1").val("-0.54312581739875619841");
+            $("#out2").val("0.6164775950855575808");
+            $("#out3").val("-0.54312581739874339840");
 
-            $("#iterationMultiplier").val(0.3);
+            $("#iterationMultiplier").val(1);
             $("#threshMult").val(1);
 
 
@@ -265,6 +265,21 @@
         //******************************************************
         recalculate = function () {
             ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+
+            var maxMult = $("#iterationMultiplier").val();
+            var x1 = new Big($("#out1").val());
+            var y1 = new Big($("#out2").val());
+            var x2 = new Big($("#out3").val());
+            var maxiter = Math.floor(maxMult * Math.max(100, Math.abs(30 * Math.log(x2.minus(x1).toFloat()))));  // this is an empirical approximation. Nothing mathematical. Just grows slowly
+            refSet.maxiter = maxiter;
+            $('#out5').val(maxiter);
+
+            var threshMult = parseFloat($("#threshMult").val());
+            var threshold = Math.floor(10 + Math.abs(x2.minus(x1).e)) * threshMult;
+            refSet.threshold = threshold;
+            $('#out6').val(threshold);
+
+
             paintThreadSet();
         }
 
@@ -391,7 +406,7 @@
             //refSet.setRefDistance();
 
             
-            var numworkers = 1;
+            var numworkers = 5;
 
             var xpixel = 0, ypixel = 0;  // keeps count of the index of the subimage
 

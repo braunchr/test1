@@ -106,14 +106,14 @@ MSet.prototype.paint = function (imgbit) {
     //var cy = imgbit.y1;
     //dist = this.refdistance(cx, cy);
 
-    var xRefOffset = -this.xRef.minus(cx).toFloat()
-    var yRefOffset = this.yRef.minus(cy).toFloat();
+    var xRefOffset = cx.minus(this.xRef).toFloat()
+    var yRefOffset = cy.minus(this.yRef).toFloat();
 
     for (var j = 0; j < imgbit.height; j++) {
         for (var i = 0; i < imgbit.width; i++) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
-                dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset + j * xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.plus(imgbit.xyIncrement.times(j)));
+                dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset - j * xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.minus(imgbit.xyIncrement.times(j)));
                 this.colorise(dist, i , j, xyInc, imgbit);
             }
         }
@@ -376,17 +376,21 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         dist = Math.log(modulus) * Math.sqrt(modulus/(this.Ypxorbit[iter] * this.Ypxorbit[iter] + this.Ypyorbit[iter] * this.Ypyorbit[iter]));
     }
     if (dist == 0) {
-        qq = 0;
-    }
-    /*
-    if(dist==0){
-        var testDist = this.getDepth(cx, cy);
-        if (testDist > this.maxRefIter) {
-            testDist += 0;
-        }
-    }
-    */
+     
+     //   for (var h = 0; h < 371; h++)
+     //       Debug.writeln(this.Xxorbit[h].toString());
+     //   for (var h = 0; h < 371; h++)
+     //        Debug.writeln(this.Yxorbit[h].toString());
 
+    //    this.xRef = new Big(cx);
+     //   this.yRef = new Big(cy);
+     //   this.setRefDistance();
+     //   for (var h = 0; h < 198; h++)
+      //      Debug.writeln(this.Xxorbit[h].toString());
+   
+       h = 0;
+    }
+ 
 
     return dist;
 
@@ -533,17 +537,17 @@ MSet.prototype.setRefPoint = function (imgBit) {
             && imgBit.imgData.data[index + 2] == 0 && imgBit.imgData.data[index + 3] == 255) {
                 blackFound++;
                 if (blackFound == 3) {
-                    var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i-1)));
-                    var cy = imgBit.y1.plus(imgBit.xyIncrement.times(new Big(j)));
+                    var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i - 1)));
+                    var cy = imgBit.y1.minus(imgBit.xyIncrement.times(new Big(j)));
                     var depth = this.getDepth(cx, cy);
-                    
-                    if (depth >200 ) {
+
+                        if (depth > this.maxRefIter) {
                         this.xRef = cx;
                         this.yRef = cy;
                         this.xyInc = ((imgBit.x2).minus(imgBit.x1)).toFloat() / canvas1.width;
                         return;
                     } else
-                        blackFound--;
+                            blackFound--;
 
                 }
 
