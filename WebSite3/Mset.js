@@ -69,7 +69,6 @@ MSet.prototype.setColor = function (color1, color2, color3) {
 MSet.prototype.colorise = function (dist, i, j, xyInc, imgbit) {
 
     var radius = Math.floor(dist / xyInc);
-    
 
     if (radius > 1) {
         // imgbit.setPixel(i, j, this.col1[0], this.col1[1], this.col1[2]); // the point is outside the set
@@ -82,9 +81,13 @@ MSet.prototype.colorise = function (dist, i, j, xyInc, imgbit) {
         imgbit.setPixel(i, j, this.col3[0], this.col3[1], this.col3[2]); // the point is just outside the set
 
     }
-    else {
-        imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set
+    else if (dist == 0) {
+        imgbit.setPixel(i, j, 0, 0, 0); // the point is IN the set and we bailed out
+
     }
+    else
+        imgbit.setPixel(i, j, 0, 0, 1); // the point is IN the set but not exactly - still black
+
 }
 
 //***************************************************************
@@ -106,14 +109,14 @@ MSet.prototype.paint = function (imgbit) {
     //var cy = imgbit.y1;
     //dist = this.refdistance(cx, cy);
 
-    var xRefOffset = cx.minus(this.xRef).toFloat()
+    var xRefOffset = cx.minus(this.xRef).toFloat();
     var yRefOffset = cy.minus(this.yRef).toFloat();
 
     for (var j = 0; j < imgbit.height; j++) {
         for (var i = 0; i < imgbit.width; i++) {
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
-                dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset - j * xyInc, cx.plus(imgbit.xyIncrement.times(i)), cy.minus(imgbit.xyIncrement.times(j)));
+                dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset - j * xyInc, cx.plus(imgbit.xyIncrement.times(new Big(i))), cy.minus(imgbit.xyIncrement.times(new Big(j))));
                 this.colorise(dist, i , j, xyInc, imgbit);
             }
         }
@@ -131,8 +134,8 @@ MSet.prototype.setRefDistance = function () {
     var x = new Big(0), y = new Big(0), x2 = new Big(0), y2 = new Big(0), temp = new Big(0), iter = 0, dist = 0;
 
     this.Xxorbit[0] = this.Xyorbit[0] = 0;
-    var cx = this.xRef;
-    var cy = this.yRef;
+    var cx = new Big(this.xRef);
+    var cy = new Big(this.yRef);
     this.Xpxorbit[0] = this.Xpyorbit[0] = 0;
     this.Axorbit[0] = 0; this.Ayorbit[0] = 0;
     this.Bxorbit[0] = this.Byorbit[0] = 0;
@@ -200,7 +203,7 @@ MSet.prototype.setRefDistance = function () {
         iter++; // We now go to N+1
         this.Xxorbit[iter] = x.toFloat();
         this.Xyorbit[iter] = y.toFloat();
-
+        
         this.Xpxorbit[iter] = xdc;
         this.Xpyorbit[iter] = ydc;
 
@@ -240,7 +243,7 @@ MSet.prototype.setRefDistance = function () {
             }
 
             // Or an overload on the computation of the derivatives series (eg Cc is > 0.01% of Bc)
-            if ((Math.abs(this.Cpxorbit[iter] * this.xyInc * 1000) > Math.abs(this.Bpxorbit[iter]))) {
+            if ((Math.abs(this.Cpxorbit[iter] * this.xyInc * 1e9) > Math.abs(this.Bpxorbit[iter]))) {
                 computeTaylorSeries = false;
             }
 
@@ -314,7 +317,14 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         iter--;
         this.ApproxIndexStart--;
     }
-    
+
+
+    if (deltax == 1.490289804288e-17 && deltay == 1.9793689703807997e-17) {
+        dd = this.getDepth(cx, cy);
+        iter = 0;
+        
+    }
+
     // calculate the starting poing for hte Taylor function using ABC    
     term1x = dx0 * this.Axorbit[iter] - dy0 * this.Ayorbit[iter];
     term1y = dx0 * this.Ayorbit[iter] + dy0 * this.Axorbit[iter];
@@ -367,6 +377,12 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         this.Yxorbit[iter] = x;
         this.Yyorbit[iter] = y;
 
+        if (deltax == 1.490289804288e-17 && deltay == 1.9793689703807997e-17) {
+
+            //Debug.writeln(iter.toString());
+            //Debug.writeln(dy.toString());
+        }
+
         modulus = x * x + y * y;
     
     }
@@ -377,6 +393,11 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
     }
     if (dist == 0) {
      
+        if (deltax == 1.490289804288e-17 && deltay == 1.9793689703807997e-17) {
+            this.xRef = new Big(cx);
+            this.yRef = new Big(cy);
+            this.setRefDistance();
+        }
      //   for (var h = 0; h < 371; h++)
      //       Debug.writeln(this.Xxorbit[h].toString());
      //   for (var h = 0; h < 371; h++)
@@ -387,8 +408,9 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
      //   this.setRefDistance();
      //   for (var h = 0; h < 198; h++)
       //      Debug.writeln(this.Xxorbit[h].toString());
-   
-       h = 0;
+        Debug.writeln(cx.v.toString());
+        Debug.writeln(cy.v.toString());
+        
     }
  
 
@@ -450,14 +472,17 @@ MSet.prototype.getDepth = function (cx, cy) {
     var y2 = new Big(0);
     var x2 = new Big(0);
     var iter = 0;
+    var modulus = 0;
+
     
-    while ((iter < this.maxiter) && (x2.toFloat() < 10000)) {
+    while ((iter < this.maxiter) && (modulus < 10000)) {
         temp = (x2.minus(y2).plus(cx));
         y = (x.times(2).times(y).plus(cy));
         x = temp;
         x2 = x.times(x);
         y2 = y.times(y);
-            
+        modulus = x2.toFloat() + y2.toFloat();
+
         iter++; // We now go to N+1
         
     }
@@ -517,8 +542,8 @@ MSet.prototype.refCopy = function (m) {
 MSet.prototype.setRefPoint = function (imgBit) {
 
     if (this.xRef == null) {  // if it is the first time we draw the set then use any value
-        this.xRef = new Big("-0.543125818776033354");
-        this.yRef = new Big("0.6164775955475614916");
+        this.xRef = new Big("-0.543125817398749032964402");
+        this.yRef = new Big("0.616477595085555005437988");
         // this.xRef = new Big("-0.5431258187760327092");
         // this.yRef = new Big("0.6164775955475611892");
         //this.xRef = new Big("-0.5431258187760327091955");
@@ -531,32 +556,34 @@ MSet.prototype.setRefPoint = function (imgBit) {
 
     for (var j = 0; j < imgBit.width; j++) {
         for (var i = 0; i < imgBit.height; i++) {
-                    
+
             var index = (j * imgBit.height + i) * 4;
             if (imgBit.imgData.data[index] == 0 && imgBit.imgData.data[index + 1] == 0
             && imgBit.imgData.data[index + 2] == 0 && imgBit.imgData.data[index + 3] == 255) {
-                blackFound++;
-                if (blackFound == 3) {
-                    var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i - 1)));
-                    var cy = imgBit.y1.minus(imgBit.xyIncrement.times(new Big(j)));
-                    var depth = this.getDepth(cx, cy);
 
-                        if (depth > this.maxRefIter) {
-                        this.xRef = cx;
-                        this.yRef = cy;
-                        this.xyInc = ((imgBit.x2).minus(imgBit.x1)).toFloat() / canvas1.width;
-                        return;
-                    } else
-                            blackFound--;
+                var cx = imgBit.x1.plus(imgBit.xyIncrement.times(new Big(i)));
+                var cy = imgBit.y1.minus(imgBit.xyIncrement.times(new Big(j)));
+                var depth = this.getDepth(cx, cy);
+
+                if (depth > this.maxRefIter) {
+                    this.xRef = cx;
+                    this.yRef = cy;
+                    this.xyInc = ((imgBit.x2).minus(imgBit.x1)).toFloat() / canvas1.width;
+                    return;
+
+                    Debug.writeln("");
+                    Debug.writeln(cx.v.toString());
+                    Debug.writeln("");
+                    Debug.writeln("");
+                    Debug.writeln("");
+
 
                 }
 
             }
-            else blackFound = 0;
-                
+
         }
         i = 0; // reset for the next line
-        blackFound = 0;
     }
 
     // if nothing was found, then return without setting the valuers

@@ -2,7 +2,7 @@
 
 var bp = 7; // number of digits per token. Store the base in power of 10 - range 1-7 - if 8 or over, then the multiplicatin will result in 16 digits which exceeds the javascript maximum of 2^32
 var base = Math.pow(10, bp);
-var PRECISION =5;  // maximum number of tokens
+var PRECISION =10;  // maximum number of tokens
 
 //**************************************************************************************
 //                         C O N S T R U C T O R
