@@ -68,6 +68,8 @@ MSet.prototype.setColor = function (color1, color2, color3) {
 
 MSet.prototype.colorise = function (dist, i, j, xyInc, imgbit) {
 
+  
+
     var radius = Math.floor(dist / xyInc);
 
     if (radius > 1) {
@@ -114,6 +116,7 @@ MSet.prototype.paint = function (imgbit) {
 
     for (var j = 0; j < imgbit.height; j++) {
         for (var i = 0; i < imgbit.width; i++) {
+           
             if (imgbit.imgData.data[4 * (j * imgbit.width + i) + 3] == 0) //only paint if the pixel is transparent.
             {
                 dist = 0.25 * this.deltadistance(xRefOffset + i * xyInc, yRefOffset - j * xyInc, cx.plus(imgbit.xyIncrement.times(new Big(i))), cy.minus(imgbit.xyIncrement.times(new Big(j))));
@@ -391,27 +394,6 @@ MSet.prototype.deltadistance = function (deltax, deltay, cx, cy) {
         // forumula for distance estimate is Dist = log(modulus)* Sqrt(|Z|/|Z'|)
         dist = Math.log(modulus) * Math.sqrt(modulus/(this.Ypxorbit[iter] * this.Ypxorbit[iter] + this.Ypyorbit[iter] * this.Ypyorbit[iter]));
     }
-    if (dist == 0) {
-     
-        if (deltax == 1.490289804288e-17 && deltay == 1.9793689703807997e-17) {
-            this.xRef = new Big(cx);
-            this.yRef = new Big(cy);
-            this.setRefDistance();
-        }
-     //   for (var h = 0; h < 371; h++)
-     //       Debug.writeln(this.Xxorbit[h].toString());
-     //   for (var h = 0; h < 371; h++)
-     //        Debug.writeln(this.Yxorbit[h].toString());
-
-    //    this.xRef = new Big(cx);
-     //   this.yRef = new Big(cy);
-     //   this.setRefDistance();
-     //   for (var h = 0; h < 198; h++)
-      //      Debug.writeln(this.Xxorbit[h].toString());
-        Debug.writeln(cx.v.toString());
-        Debug.writeln(cy.v.toString());
-        
-    }
  
 
     return dist;
@@ -474,6 +456,8 @@ MSet.prototype.getDepth = function (cx, cy) {
     var iter = 0;
     var modulus = 0;
 
+    if (this.maxRefIter > this.maxiter)
+        this.maxiter = this.maxRefIter;
     
     while ((iter < this.maxiter) && (modulus < 10000)) {
         temp = (x2.minus(y2).plus(cx));
@@ -554,10 +538,10 @@ MSet.prototype.setRefPoint = function (imgBit) {
 
     var blackFound = 0;
 
-    for (var j = 0; j < imgBit.width; j++) {
-        for (var i = 0; i < imgBit.height; i++) {
+    for (var j = 0; j < imgBit.height; j++) {
+        for (var i = 0; i < imgBit.width; i++) {
 
-            var index = (j * imgBit.height + i) * 4;
+            var index = (j * imgBit.width + i) * 4;
             if (imgBit.imgData.data[index] == 0 && imgBit.imgData.data[index + 1] == 0
             && imgBit.imgData.data[index + 2] == 0 && imgBit.imgData.data[index + 3] == 255) {
 
@@ -565,23 +549,14 @@ MSet.prototype.setRefPoint = function (imgBit) {
                 var cy = imgBit.y1.minus(imgBit.xyIncrement.times(new Big(j)));
                 var depth = this.getDepth(cx, cy);
 
-                if (depth > this.maxRefIter) {
-                    this.xRef = cx;
-                    this.yRef = cy;
+                if (depth >= this.maxRefIter) {
+                    this.xRef = new Big(cx);
+                    this.yRef = new Big(cy);
                     this.xyInc = ((imgBit.x2).minus(imgBit.x1)).toFloat() / canvas1.width;
+                    this.setRefDistance();
                     return;
-
-                    Debug.writeln("");
-                    Debug.writeln(cx.v.toString());
-                    Debug.writeln("");
-                    Debug.writeln("");
-                    Debug.writeln("");
-
-
                 }
-
             }
-
         }
         i = 0; // reset for the next line
     }
